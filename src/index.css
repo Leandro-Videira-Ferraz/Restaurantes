@@ -1,0 +1,220 @@
+@import "tailwindcss";
+
+@theme {
+  --color-amber-500: var(--accent, #f59e0b);
+  --color-amber-400: color-mix(in srgb, var(--accent, #f59e0b) 85%, white);
+  --color-amber-600: color-mix(in srgb, var(--accent, #f59e0b) 85%, black);
+  --color-brand-primary: var(--accent, #f59e0b);
+  --color-brand-secondary: #ffcd1f;
+  --color-surface-base: #050505;
+  --color-surface-card: rgba(23, 23, 23, 0.7);
+  --color-surface-border: rgba(255, 255, 255, 0.08);
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply antialiased overflow-x-hidden;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-base, #050505);
+    color: var(--text-primary, #f5f5f5);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-base, #0a0a0a);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--accent, #f59e0b);
+    border-radius: 10px;
+    border: 2px solid var(--bg-base, #0a0a0a);
+  }
+}
+
+@layer components {
+  .glass-header {
+    @apply sticky top-0 z-50 backdrop-blur-md;
+    background: var(--bg-header, rgba(10,10,10,0.8));
+    border-bottom: 1px solid var(--border-color, rgba(255,255,255,0.05));
+  }
+
+  .glass-card {
+    @apply backdrop-blur-xl rounded-2xl overflow-hidden transition-all duration-500;
+    background: var(--bg-card, rgba(23,23,23,0.7));
+    border: 1px solid var(--border-color, rgba(255,255,255,0.06));
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
+  }
+  .glass-card:hover {
+    border-color: color-mix(in srgb, var(--accent, #f59e0b) 30%, transparent);
+    background: var(--bg-card-hover, rgba(28,28,28,0.8));
+  }
+
+  .premium-button {
+    @apply relative flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-xl transition-all duration-300 active:scale-[0.98] disabled:opacity-50;
+    background: linear-gradient(135deg, var(--accent, #f59e0b) 0%, color-mix(in srgb, var(--accent, #f59e0b) 80%, white) 100%);
+    color: #000;
+  }
+  .premium-button:hover {
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent, #f59e0b) 40%, transparent);
+  }
+
+  .premium-input {
+    @apply w-full rounded-xl px-4 py-3.5 transition-all duration-300 focus:outline-none placeholder:text-gray-600;
+    background: var(--bg-input, #121212);
+    border: 1px solid var(--border-color, rgba(255,255,255,0.08));
+    color: var(--text-primary, #fff);
+  }
+  .premium-input:focus {
+    border-color: var(--accent, #f59e0b);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent, #f59e0b) 10%, transparent);
+  }
+
+  .action-btn {
+    @apply p-2.5 rounded-xl transition-all duration-200 active:scale-90;
+  }
+  .action-btn:hover {
+    background: var(--border-color, rgba(255,255,255,0.05));
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease-out forwards;
+}
+
+/* ===== MODO CLARO - Overrides Globais ===== */
+.theme-light {
+  /* Textos */
+  color: #111 !important;
+}
+
+.theme-light .text-white {
+  color: #111 !important;
+}
+
+.theme-light .text-gray-100,
+.theme-light .text-gray-200,
+.theme-light .text-gray-300 {
+  color: #333 !important;
+}
+
+.theme-light .text-gray-400,
+.theme-light .text-gray-500 {
+  color: #666 !important;
+}
+
+.theme-light .text-gray-600,
+.theme-light .text-gray-700 {
+  color: #888 !important;
+}
+
+/* Fundos de Cards e Superfícies */
+.theme-light .bg-\[rgba\(23\,23\,23\,0\.7\)\],
+.theme-light .glass-card {
+  background: rgba(255,255,255,0.9) !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06) !important;
+}
+
+.theme-light .glass-header {
+  background: rgba(255,255,255,0.9) !important;
+  border-color: rgba(0,0,0,0.06) !important;
+}
+
+.theme-light .bg-\[\#050505\],
+.theme-light .bg-\[\#0a0a0a\],
+.theme-light .bg-black,
+.theme-light .bg-\[rgba\(10\,10\,10\,0\.8\)\] {
+  background-color: #f5f5f5 !important;
+}
+
+.theme-light .bg-black\/40,
+.theme-light .bg-black\/60 {
+  background-color: rgba(255,255,255,0.8) !important;
+}
+
+.theme-light .bg-white\/5,
+.theme-light .bg-white\/\[0\.03\],
+.theme-light .bg-white\/\[0\.01\],
+.theme-light .bg-white\/\[0\.02\] {
+  background-color: rgba(0,0,0,0.03) !important;
+}
+
+.theme-light .bg-white\/10,
+.theme-light .hover\:bg-white\/5:hover,
+.theme-light .hover\:bg-white\/10:hover {
+  background-color: rgba(0,0,0,0.05) !important;
+}
+
+.theme-light .bg-\[\#121212\] {
+  background-color: #fff !important;
+}
+
+/* Bordas */
+.theme-light .border-white\/5,
+.theme-light .border-white\/10,
+.theme-light .border-\[rgba\(255\,255\,255\,0\.06\)\],
+.theme-light .border-\[rgba\(255\,255\,255\,0\.05\)\],
+.theme-light .border-\[rgba\(255\,255\,255\,0\.08\)\] {
+  border-color: rgba(0,0,0,0.1) !important;
+}
+
+/* Inputs */
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  background-color: #fff !important;
+  color: #111 !important;
+  border-color: rgba(0,0,0,0.12) !important;
+}
+
+.theme-light input::placeholder {
+  color: #aaa !important;
+}
+
+/* Divisores */
+.theme-light .bg-white\/5.h-px,
+.theme-light .divide-white\/5 > * + * {
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+/* Scrollbar Light */
+.theme-light ::-webkit-scrollbar-track {
+  background: #f0f0f0 !important;
+}
+.theme-light ::-webkit-scrollbar-thumb {
+  border-color: #f0f0f0 !important;
+}
+
+/* Sombras dos botões de adicionar ao carrinho */
+.theme-light .shadow-amber-500\/10,
+.theme-light .shadow-\[0\_10px\_25px\_rgba\(245\,158\,11\,0\.2\)\],
+.theme-light .shadow-\[0\_10px\_30px\_rgba\(245\,158\,11\,0\.15\)\] {
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+/* Options de select */
+.theme-light option {
+  background: #fff !important;
+  color: #111 !important;
+}
