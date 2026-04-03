@@ -3,16 +3,19 @@ import { useEffect } from 'react'
 import { StoreProvider, useStore } from './store/StoreContext'
 import { CartProvider } from './store/CartContext'
 import { UserProvider } from './store/UserContext'
+import { OrdersProvider } from './store/OrdersContext'
 import Header from './components/Header'
 import Tabs from './components/Tabs'
 import CategoryForm from './components/CategoryForm'
 import ProductForm from './components/ProductForm'
+import AddonsForm from './components/AddonsForm'
 import Menu from './components/Menu'
 import Settings from './components/Settings'
 import Cart from './components/Cart'
 import Checkout from './components/Checkout'
 import DeliveryForm from './components/DeliveryForm'
 import Orders from './components/Orders'
+import OrderQueue from './components/OrderQueue'
 
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -26,7 +29,9 @@ export default function App() {
     <StoreProvider>
       <CartProvider>
         <UserProvider>
-          <AppShell />
+          <OrdersProvider>
+            <AppShell />
+          </OrdersProvider>
         </UserProvider>
       </CartProvider>
     </StoreProvider>
@@ -62,35 +67,55 @@ function AppShell() {
       <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
       <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
 
-      <Header />
-      
       <Routes>
+        {/* Rota Limpa para Modo Cozinha - Sem Header, Sem Sidebar */}
+        <Route path="/admin/kitchen" element={<OrderQueue kitchenOnly={true} />} />
+
         <Route path="/" element={
-          <main className="max-w-5xl mx-auto px-6 py-12 relative z-10 w-full">
-            <Menu />
-            <Cart />
-          </main>
+          <>
+            <Header />
+            <main className="max-w-5xl mx-auto px-6 py-12 relative z-10 w-full">
+              <Menu />
+              <Cart />
+            </main>
+          </>
         } />
 
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/orders" element={<Orders />} />
+        <Route path="/checkout" element={
+          <>
+            <Header />
+            <Checkout />
+          </>
+        } />
+        
+        <Route path="/orders" element={
+          <>
+            <Header />
+            <Orders />
+          </>
+        } />
 
         <Route path="/admin/*" element={
-          <div className="flex-1 flex flex-col md:flex-row gap-8 max-w-[1600px] w-full mx-auto px-6 py-8 relative z-10">
-            <aside className="shrink-0">
-              <Tabs />
-            </aside>
-            <main className="flex-1 min-w-0">
-              <Routes>
-                <Route index element={<Navigate to="categories" replace />} />
-                <Route path="menu" element={<Menu />} />
-                <Route path="categories" element={<CategoryForm />} />
-                <Route path="products" element={<ProductForm />} />
-                <Route path="delivery" element={<DeliveryForm />} />
-                <Route path="settings" element={<Settings />} />
-              </Routes>
-            </main>
-          </div>
+          <>
+            <Header />
+            <div className="flex-1 flex flex-col md:flex-row gap-8 max-w-[1600px] w-full mx-auto px-6 py-8 relative z-10">
+              <aside className="shrink-0">
+                <Tabs />
+              </aside>
+              <main className="flex-1 min-w-0">
+                <Routes>
+                  <Route index element={<Navigate to="orders" replace />} />
+                  <Route path="menu" element={<Menu />} />
+                  <Route path="categories" element={<CategoryForm />} />
+                  <Route path="products" element={<ProductForm />} />
+                  <Route path="addons" element={<AddonsForm />} />
+                  <Route path="orders" element={<OrderQueue />} />
+                  <Route path="delivery" element={<DeliveryForm />} />
+                  <Route path="settings" element={<Settings />} />
+                </Routes>
+              </main>
+            </div>
+          </>
         } />
         
         <Route path="*" element={<Navigate to="/" replace />} />

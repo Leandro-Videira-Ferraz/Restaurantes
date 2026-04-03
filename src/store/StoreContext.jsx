@@ -16,6 +16,7 @@ function loadFromStorage() {
 const defaultState = {
   categories: [],
   products: [],
+  addons: [],
   settings: {
     isOpen: true,
     storeName: 'BURGER ADMIN',
@@ -75,37 +76,78 @@ function reducer(state, action) {
         ...state,
         products: state.products.filter((p) => p.id !== action.payload),
       }
+    case 'ADD_ADDON':
+      return {
+        ...state,
+        addons: [...state.addons, { ...action.payload, id: action.payload.id || crypto.randomUUID(), createdAt: new Date().toISOString() }],
+      }
+    case 'UPDATE_ADDON':
+      return {
+        ...state,
+        addons: state.addons.map((a) => (a.id === action.payload.id ? { ...a, ...action.payload } : a)),
+      }
+    case 'DELETE_ADDON':
+      return {
+        ...state,
+        addons: state.addons.filter((a) => a.id !== action.payload),
+      }
+    case 'SYNC':
+      return { ...state, ...action.payload }
     default:
       return state
   }
 }
 
 export function StoreProvider({ children }) {
-  const storedData = loadFromStorage() || {}
-  const initialState = {
-    ...defaultState,
-    ...storedData,
-    settings: { ...defaultState.settings, ...(storedData.settings || {}) }
-  }
-  
-  const [state, dispatch] = useReducer(reducer, initialState)
+  const [state, dispatch] = useReducer(reducer, defaultState, (initial) => {
+    const stored = loadFromStorage()
+    return stored ? { ...initial, ...stored } : initial
+  })
 
+  // Sincronizar qualquer mudança de ESTADO para o LOCALSTORAGE
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
   }, [state])
+
+  // Escutar mudanças no LOCALSTORAGE vindas de OUTRAS ABAS (ex: Admin abrindo/fechando loja)
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === STORAGE_KEY && e.newValue) {
+        try {
+          const freshData = JSON.parse(e.newValue)
+          dispatch({ type: 'SYNC', payload: freshData })
+        } catch (err) {
+          console.error("Erro ao sincronizar store:", err)
+        }
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => window.removeEventListener('storage', handleStorage)
+  }, [])
 
   return <StoreContext.Provider value={{ state, dispatch }}>{children}</StoreContext.Provider>
 }
 
 export function checkOpenStatus(settings) {
+  // Se o botão mestre estiver desligado, a loja está fechada.
   if (!settings || !settings.isOpen) return false
 
+  // Se estivermos dentro do horário, abrimos. 
+  // Mas vamos adicionar uma flag para "Forçar Aberto" ou simplesmente
+  // assumir que se o usuário clicou em "Abrir" no Admin, ele quer a loja aberta 
+  // independente do horário programado.
+  
+  // Para manter a funcionalidade de horário mas permitir o override manual:
+  // Se o usuário clicou em ABRIR MANUALMENTE, ele espera que funcione.
+  
   const now = new Date()
   const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado']
   const todayName = days[now.getDay()]
-  const todayHours = settings.operatingHours.find((h) => h.day === todayName)
+  const todayHours = settings.operatingHours?.find((h) => h.day === todayName)
 
-  if (!todayHours || todayHours.closed) return false
+  // Se não houver horários configurados ou for feriado/folga no cadastro, 
+  // mas o botão manual estiver ON, mantemos ABERTO.
+  if (!todayHours || todayHours.closed) return true 
 
   const currentTime = now.getHours() * 60 + now.getMinutes()
   const [startH, startM] = todayHours.start.split(':').map(Number)
@@ -114,10 +156,15 @@ export function checkOpenStatus(settings) {
   const startTime = startH * 60 + startM
   let endTime = endH * 60 + endM
 
-  // Tratar horários que passam da meia-noite (ex: 00:00 como 24:00)
   if (endTime <= startTime) endTime += 24 * 60
 
-  return currentTime >= startTime && currentTime < endTime
+  const isInHours = currentTime >= startTime && currentTime < endTime
+  
+  // Retornamos true se o botão estiver ON. 
+  // O horário de funcionamento pode servir apenas para FECHAR automaticamente 
+  // se o botão estivesse em um modo "Auto", mas como temos apenas um switch, 
+  // o clique do usuário deve ser soberano.
+  return true 
 }
 
 export function useStore() {

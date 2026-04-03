@@ -14,12 +14,14 @@ import {
 import { useCart } from '../store/CartContext'
 import { useStore } from '../store/StoreContext'
 import { useUser } from '../store/UserContext'
+import { useOrders } from '../store/OrdersContext'
 
 export default function Checkout() {
   const navigate = useNavigate()
   const { cart, clearCart } = useCart()
   const { state } = useStore()
   const { user, dispatch: userDispatch } = useUser()
+  const { dispatch: ordersDispatch } = useOrders()
   const { settings } = state
   const [step, setStep] = useState(1) // 1: Info, 2: Entrega, 3: Pagamento, 4: Sucesso
 
@@ -71,23 +73,46 @@ export default function Checkout() {
         ? ((settings.useNeighborhoodFees && settings.neighborhoodFees?.find(n => n.name === formData.address.neighborhood)?.fee) || settings.deliveryFee)
         : 0
 
+    const orderId = `#${Math.floor(1000 + Math.random() * 9000)}`
+
+    // Normalizar itens: empacotar personalizações em 'customizations'
+    const orderItems = cart.items.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      imageUrl: item.imageUrl,
+      finalPrice: item.finalPrice || item.price,
+      customizations: {
+        removedIngredients: item.removedIngredients || [],
+        addons: item.addons || [],
+        observation: item.observation || '',
+      }
+    }))
+
     const newOrder = {
-      id: `#${Math.floor(1000 + Math.random() * 9000)}`,
+      id: orderId,
       date: new Date().toISOString(),
-      items: cart.items,
+      items: orderItems,
       subtotal: cart.total,
       deliveryFee: deliveryFee,
       total: cart.total + deliveryFee,
       status: 'RECEBIDO',
       paymentMethod: formData.paymentMethod,
+      change: formData.paymentMethod === 'cash' ? formData.change : '',
       deliveryMethod: formData.deliveryMethod,
-      address: formData.address
+      address: formData.address,
+      customerName: formData.name,
+      customerPhone: formData.phone,
     }
 
-    // 3. Adicionar ao Histórico
+    // 3. Adicionar ao Histórico do Cliente
     userDispatch({ type: 'ADD_ORDER', payload: newOrder })
 
-    // 4. Limpar Carrinho e mostrar sucesso
+    // 4. Enviar para a Fila de Pedidos do Restaurante
+    ordersDispatch({ type: 'ADD_ORDER', payload: newOrder })
+
+    // 5. Limpar Carrinho e mostrar sucesso
     setStep(4)
     clearCart()
   }

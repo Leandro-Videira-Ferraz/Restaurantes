@@ -1,16 +1,45 @@
 import { useState } from 'react'
-import { Utensils, Info, Eye, Plus, Clock } from 'lucide-react'
+import { Utensils, Info, Eye, Plus, Clock, Layers } from 'lucide-react'
 import { useStore, checkOpenStatus } from '../store/StoreContext'
 import { useCart } from '../store/CartContext'
+import CustomizeModal from './CustomizeModal'
 
 export default function Menu() {
   const { state } = useStore()
   const { addToCart } = useCart()
   const { settings } = state
   const [showToast, setShowToast] = useState(false)
+  const [customizeProduct, setCustomizeProduct] = useState(null)
+
+  const allAddons = (state.addons || []).filter(a => a.active)
 
   const handleAddToCart = (product) => {
-    addToCart(product)
+    // Verificar se o produto tem ingredientes removíveis ou adicionais disponíveis
+    const hasRemovable = (product.ingredients || []).some(i => i.removable)
+    const productAddonIds = product.addonIds || []
+    const hasAddons = productAddonIds.length > 0
+      ? allAddons.some(a => productAddonIds.includes(a.id))
+      : allAddons.length > 0
+
+    if (hasRemovable || hasAddons) {
+      setCustomizeProduct(product)
+    } else {
+      // Adicionar direto sem personalização
+      addToCart(product, {
+        removedIngredients: [],
+        addons: [],
+        observation: '',
+        addonsTotal: 0,
+        finalPrice: product.price,
+      })
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 2000)
+    }
+  }
+
+  const handleCustomizeConfirm = (customization) => {
+    addToCart(customizeProduct, customization)
+    setCustomizeProduct(null)
     setShowToast(true)
     setTimeout(() => setShowToast(false), 2000)
   }
@@ -80,68 +109,96 @@ export default function Menu() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-            {group.products.map((product) => (
-              <div key={product.id} className="glass-card group flex flex-col h-full hover:shadow-[0_0_30px_rgba(245,158,11,0.05)] transition-all overflow-hidden border-white/5 hover:border-amber-500/20">
-                <div className="relative aspect-video overflow-hidden">
-                  {product.imageUrl ? (
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                      <Utensils className="w-12 h-12 text-gray-800" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
-                  
-                  <div className="absolute top-4 right-4">
-                     <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-xl">
-                        <span className="text-sm font-black text-white italic">
-                          <span className="text-[10px] text-amber-500 mr-0.5 not-italic">R$</span>
-                          {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </span>
-                     </div>
-                  </div>
-                </div>
+            {group.products.map((product) => {
+              const hasRemovable = (product.ingredients || []).some(i => i.removable)
+              const productAddonIds = product.addonIds || []
+              const hasProductAddons = productAddonIds.length > 0
+                ? allAddons.some(a => productAddonIds.includes(a.id))
+                : allAddons.length > 0
+              const isCustomizable = hasRemovable || hasProductAddons
 
-                <div className="p-5 flex flex-col flex-1 space-y-3">
-                  <div>
-                    <h4 className="text-base font-bold text-white uppercase tracking-tight group-hover:text-amber-500 transition-colors">{product.name}</h4>
-                    {product.description && (
-                      <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed italic mt-1">{product.description}</p>
+              return (
+                <div key={product.id} className="glass-card group flex flex-col h-full hover:shadow-[0_0_30px_rgba(245,158,11,0.05)] transition-all overflow-hidden border-white/5 hover:border-amber-500/20">
+                  <div className="relative aspect-video overflow-hidden">
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                        <Utensils className="w-12 h-12 text-gray-800" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
+                    
+                    <div className="absolute top-4 right-4">
+                       <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 shadow-xl">
+                          <span className="text-sm font-black text-white italic">
+                            <span className="text-[10px] text-amber-500 mr-0.5 not-italic">R$</span>
+                            {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                       </div>
+                    </div>
+
+                    {/* Badge de personalizável */}
+                    {isCustomizable && (
+                      <div className="absolute top-4 left-4">
+                        <div className="bg-amber-500/90 backdrop-blur-md px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-xl">
+                          <Layers className="w-3 h-3 text-black" />
+                          <span className="text-[8px] font-black text-black uppercase tracking-wider">Personalizável</span>
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  <div className="pt-3 mt-auto flex items-center justify-between border-t border-white/5">
-                    <div className="flex flex-wrap gap-1 max-w-[70%] text-white">
-                      {product.ingredients?.slice(0, 3).map((ing, idx) => (
-                        <span key={idx} className="text-[8px] font-bold text-gray-600 bg-white/5 px-1.5 py-0.5 rounded uppercase tracking-tighter">
-                          {ing.name}
-                        </span>
-                      ))}
-                      {product.ingredients?.length > 3 && <span className="text-[8px] font-bold text-gray-700">...</span>}
+                  <div className="p-5 flex flex-col flex-1 space-y-3">
+                    <div>
+                      <h4 className="text-base font-bold text-white uppercase tracking-tight group-hover:text-amber-500 transition-colors">{product.name}</h4>
+                      {product.description && (
+                        <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed italic mt-1">{product.description}</p>
+                      )}
                     </div>
-                    
-                    <button 
-                      disabled={!isStoreOpen}
-                      onClick={() => handleAddToCart(product)}
-                      className={`p-2 rounded-xl transition-all shadow-[0_5px_15px_rgba(245,158,11,0.2)] active:scale-95 ${
-                        isStoreOpen 
-                          ? 'bg-amber-500 hover:bg-amber-400 text-black cursor-pointer' 
-                          : 'bg-white/5 text-gray-700 cursor-not-allowed opacity-50 shadow-none'
-                      }`}
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
+
+                    <div className="pt-3 mt-auto flex items-center justify-between border-t border-white/5">
+                      <div className="flex flex-wrap gap-1 max-w-[70%] text-white">
+                        {product.ingredients?.slice(0, 3).map((ing, idx) => (
+                          <span key={idx} className="text-[8px] font-bold text-gray-600 bg-white/5 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                            {ing.name}
+                          </span>
+                        ))}
+                        {product.ingredients?.length > 3 && <span className="text-[8px] font-bold text-gray-700">...</span>}
+                      </div>
+                      
+                      <button 
+                        disabled={!isStoreOpen}
+                        onClick={() => handleAddToCart(product)}
+                        className={`p-2 rounded-xl transition-all shadow-[0_5px_15px_rgba(245,158,11,0.2)] active:scale-95 ${
+                          isStoreOpen 
+                            ? 'bg-amber-500 hover:bg-amber-400 text-black cursor-pointer' 
+                            : 'bg-white/5 text-gray-700 cursor-not-allowed opacity-50 shadow-none'
+                        }`}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </section>
       ))}
+
+      {/* Modal de Personalização */}
+      {customizeProduct && (
+        <CustomizeModal
+          product={customizeProduct}
+          onClose={() => setCustomizeProduct(null)}
+          onConfirm={handleCustomizeConfirm}
+        />
+      )}
     </div>
   )
 }

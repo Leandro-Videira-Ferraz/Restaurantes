@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight, Utensils } from 'lucide-react'
+import { ShoppingCart, X, Plus, Minus, Trash2, ArrowRight, Utensils, CircleMinus, Layers } from 'lucide-react'
 import { useCart } from '../store/CartContext'
 
 export default function Cart() {
@@ -78,55 +78,102 @@ export default function Cart() {
                 </button>
               </div>
             ) : (
-              cart.items.map((item) => (
-                <div key={item.id} className="flex gap-5 group items-center bg-white/[0.01] p-2 rounded-2xl border border-transparent hover:border-white/5 transition-all">
-                  <div className="w-20 h-20 shrink-0 rounded-2xl overflow-hidden bg-white/5 border border-white/10">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Utensils className="w-8 h-8 text-gray-800" />
+              cart.items.map((item) => {
+                const itemKey = item.cartItemId || item.id
+                const hasCustomizations = (item.removedIngredients?.length > 0) || (item.addons?.length > 0) || item.observation
+                
+                return (
+                  <div key={itemKey} className="flex flex-col gap-3 group bg-white/[0.01] p-3 rounded-2xl border border-transparent hover:border-white/5 transition-all">
+                    <div className="flex gap-5 items-center">
+                      <div className="w-20 h-20 shrink-0 rounded-2xl overflow-hidden bg-white/5 border border-white/10">
+                        {item.imageUrl ? (
+                          <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Utensils className="w-8 h-8 text-gray-800" />
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0 py-1">
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-sm font-black text-white uppercase truncate pr-2 italic">{item.name}</h4>
+                          <button 
+                            onClick={() => removeItem(itemKey)}
+                            className="p-1 text-gray-700 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <p className="text-xs text-amber-500 font-bold mt-1 tracking-tight">
+                          R$ {(item.finalPrice || item.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </p>
+                        
+                        <div className="flex items-center gap-4 mt-3">
+                          <div className="flex items-center bg-black/40 rounded-xl border border-white/10 overflow-hidden shadow-inner">
+                            <button 
+                              onClick={() => removeOne(itemKey)}
+                              className="p-2 px-3 hover:text-amber-500 transition-colors bg-white/5"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </button>
+                            <span className="text-xs font-black text-white w-6 text-center">{item.quantity}</span>
+                            <button 
+                              onClick={() => addToCart(item, {
+                                removedIngredients: item.removedIngredients || [],
+                                addons: item.addons || [],
+                                observation: item.observation || '',
+                                addonsTotal: item.addonsTotal || 0,
+                                finalPrice: item.finalPrice || item.price,
+                              })}
+                              className="p-2 px-3 hover:text-amber-500 transition-colors bg-white/5"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <span className="text-[10px] text-gray-500 font-black uppercase italic tracking-widest whitespace-nowrap">
+                            R$ {((item.finalPrice || item.price) * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detalhes de Personalização */}
+                    {hasCustomizations && (
+                      <div className="ml-2 pl-4 border-l-2 border-white/5 space-y-1.5">
+                        {/* Ingredientes Removidos */}
+                        {item.removedIngredients?.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <CircleMinus className="w-3 h-3 text-red-500 shrink-0" />
+                            {item.removedIngredients.map((name, idx) => (
+                              <span key={idx} className="text-[9px] font-bold text-red-400/80 bg-red-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider line-through">
+                                {name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Adicionais */}
+                        {item.addons?.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Layers className="w-3 h-3 text-amber-500 shrink-0" />
+                            {item.addons.map((addon, idx) => (
+                              <span key={idx} className="text-[9px] font-bold text-amber-500/80 bg-amber-500/10 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                                {addon.quantity > 1 ? `${addon.quantity}x ` : ''}{addon.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Observação */}
+                        {item.observation && (
+                          <p className="text-[9px] text-gray-500 italic pl-1">"{item.observation}"</p>
+                        )}
                       </div>
                     )}
                   </div>
-                  
-                  <div className="flex-1 min-w-0 py-1">
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-sm font-black text-white uppercase truncate pr-2 italic">{item.name}</h4>
-                      <button 
-                        onClick={() => removeItem(item.id)}
-                        className="p-1 text-gray-700 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <p className="text-xs text-amber-500 font-bold mt-1 tracking-tight">
-                      R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 mt-3">
-                      <div className="flex items-center bg-black/40 rounded-xl border border-white/10 overflow-hidden shadow-inner">
-                        <button 
-                          onClick={() => removeOne(item.id)}
-                          className="p-2 px-3 hover:text-amber-500 transition-colors bg-white/5"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
-                        <span className="text-xs font-black text-white w-6 text-center">{item.quantity}</span>
-                        <button 
-                          onClick={() => addToCart(item)}
-                          className="p-2 px-3 hover:text-amber-500 transition-colors bg-white/5"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                      </div>
-                      <span className="text-[10px] text-gray-500 font-black uppercase italic tracking-widest whitespace-nowrap">
-                        R$ {(item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
 

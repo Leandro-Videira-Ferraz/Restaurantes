@@ -102,6 +102,15 @@
   animation: slideUp 0.4s ease-out forwards;
 }
 
+@keyframes pulseShadow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+  50% { box-shadow: 0 0 20px 4px rgba(245, 158, 11, 0.1); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseShadow 2s ease-in-out infinite;
+}
+
 /* ===== MODO CLARO - Overrides Globais ===== */
 .theme-light {
   /* Textos */
@@ -217,4 +226,61 @@
 .theme-light option {
   background: #fff !important;
   color: #111 !important;
+}
+
+/* ===== IMPRESSÃO TÉRMICA (80mm / 58mm) ===== */
+@media print {
+  /* Esconde TUDO que for interface do Admin */
+  nav, 
+  header, 
+  aside, 
+  .no-print, 
+  [role="navigation"],
+  .fixed,
+  button:not(.print-only) {
+    display: none !important;
+  }
+
+  /* Garante que o cupom seja visível e ocupe a tela toda da impressora */
+  .thermal-receipt {
+    display: block !important;
+    visibility: visible !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 80mm !important; /* Padrão de bobina térmica */
+    margin: 0 !important;
+    padding: 0 4mm 10mm 4mm !important; /* Margem inferior para o corte da guilhotina */
+    background: white !important;
+    color: black !important;
+    z-index: 9999 !important;
+    font-family: 'Courier New', Courier, monospace !important;
+    font-size: 12px !important;
+    line-height: 1.2 !important;
+  }
+
+  .thermal-receipt * {
+    visibility: visible !important;
+    color: black !important;
+    background: transparent !important;
+    border-color: black !important;
+  }
+
+  .thermal-receipt h2 {
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    text-align: center !important;
+    text-transform: uppercase !important;
+  }
+
+  body {
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  @page {
+    size: 80mm auto; /* Define o tamanho da página como a largura da bobina */
+    margin: 0;
+  }
 }
