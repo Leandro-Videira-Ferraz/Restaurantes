@@ -25,8 +25,12 @@ const defaultState = {
     themeMode: 'dark',
     logoUrl: '',
     deliveryFee: 5.00,
+    minimumOrderValue: 0,
+    estimatedDeliveryTime: 40,
+    estimatedPickupTime: 20,
     useNeighborhoodFees: false,
     neighborhoodFees: [],
+    coupons: [],
     operatingHours: [
       { day: 'Segunda', start: '18:00', end: '23:00', closed: false },
       { day: 'Terça', start: '18:00', end: '23:00', closed: false },
