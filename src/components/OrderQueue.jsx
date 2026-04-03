@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useStore } from '../store/StoreContext'
 import { useOrders, STATUS_FLOW, STATUS_FLOW_PICKUP } from '../store/OrdersContext'
 import {
   Clock,
@@ -69,6 +70,7 @@ function playNotificationSound() {
 
 export default function OrderQueue({ kitchenOnly = false }) {
   const navigate = useNavigate()
+  const { state } = useStore()
   const { orders, activeOrders, completedOrders, dispatch } = useOrders()
   const [filter, setFilter] = useState('active')
   const [expandedOrder, setExpandedOrder] = useState(null)
@@ -84,6 +86,8 @@ export default function OrderQueue({ kitchenOnly = false }) {
   const processedIdsRef = useRef(new Set())
   const isFirstMountRef = useRef(true)
   const autoAcceptedRef = useRef(new Set())
+
+  const isLight = state.settings.themeMode === 'light'
 
   useEffect(() => { localStorage.setItem('burger-sound-enabled', soundEnabled) }, [soundEnabled])
   useEffect(() => { localStorage.setItem('burger-auto-accept', autoAccept) }, [autoAccept])
@@ -236,15 +240,15 @@ export default function OrderQueue({ kitchenOnly = false }) {
     return (
       <>
         {thermalReceipt}
-        <div className="min-h-screen flex flex-col no-print bg-[#0a0a0c] text-white">
-          {/* Header e Grade da Cozinha ... mantendo lógica anterior */}
-          <div className="flex items-center justify-between px-8 py-6 border-b border-white/10 bg-[#111] shadow-2xl">
+        <div className="min-h-screen flex flex-col no-print transition-colors duration-500" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
+          {/* Header e Grade da Cozinha */}
+          <div className="flex items-center justify-between px-8 py-6 border-b shadow-2xl transition-all duration-500" style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-color)' }}>
             <div className="flex items-center gap-6">
               <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center border border-amber-500/30">
                 <ChefHat className="w-7 h-7 text-amber-500" />
               </div>
               <div>
-                <h1 className="text-2xl font-black uppercase tracking-widest italic text-white leading-none">Modo <span className="text-amber-500">Cozinha</span></h1>
+                <h1 className="text-2xl font-black uppercase tracking-widest italic leading-none" style={{ color: 'var(--text-primary)' }}>Modo <span className="text-amber-500">Cozinha</span></h1>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-1">{activeOrders.length} pedido(s) ativo(s)</p>
               </div>
             </div>
@@ -280,22 +284,27 @@ export default function OrderQueue({ kitchenOnly = false }) {
                   const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.RECEBIDO
                   const nextStatus = getNextStatus(order); const prevStatus = getPrevStatus(order)
                   return (
-                    <div key={order.id} className={`rounded-[2.5rem] border-2 overflow-hidden bg-[#121214] shadow-2xl ${config.border}`}>
+                    <div key={order.id} className={`rounded-[2.5rem] border-2 overflow-hidden shadow-2xl transition-all duration-500 ${config.border}`} style={{ backgroundColor: 'var(--bg-card)' }}>
                       <div className={`p-6 flex justify-between items-center ${config.bg}`}>
-                        <div className="flex items-center gap-4"><config.icon className={`w-8 h-8 ${config.text}`} /><span className="text-3xl font-black italic text-white tracking-tighter">{order.id}</span></div>
+                        <div className="flex items-center gap-4"><config.icon className={`w-8 h-8 ${config.text}`} /><span className="text-3xl font-black italic tracking-tighter" style={{ color: 'var(--text-primary)' }}>{order.id}</span></div>
                         <div className="flex items-center gap-3">
-                          {prevStatus && <button onClick={() => handleRevert(order.id)} className="p-3 rounded-xl bg-black/30 text-white/40 hover:text-white transition-all border border-white/5"><RotateCcw className="w-5 h-5" /></button>}
+                          {prevStatus && <button onClick={() => handleRevert(order.id)} className="p-3 rounded-xl bg-black/10 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all border border-black/5 dark:bg-black/30 dark:text-white/40 dark:hover:text-white dark:border-white/5"><RotateCcw className="w-5 h-5" /></button>}
                           <div className="text-right">
-                             <p className="text-[10px] font-black uppercase text-white/30 mb-0.5 tracking-tighter">Tempo Fila</p>
-                             <p className="text-sm font-black uppercase text-white">{getTimeSince(order.updatedAt || order.date)}</p>
+                             <p className="text-[10px] font-black uppercase opacity-40 mb-0.5 tracking-tighter" style={{ color: 'var(--text-primary)' }}>Tempo Fila</p>
+                             <p className="text-sm font-black uppercase" style={{ color: 'var(--text-primary)' }}>{getTimeSince(order.updatedAt || order.date)}</p>
                           </div>
                         </div>
                       </div>
                       <div className="p-8 space-y-6">
-                        <div className="flex justify-between items-center border-b border-white/5 pb-4"><p className="text-[11px] font-black uppercase text-gray-500 tracking-widest">{order.customerName}</p><span className="px-3 py-1 rounded-full bg-white/5 text-[9px] font-black text-white/40 uppercase">{order.deliveryMethod === 'delivery' ? '🛵 Entrega' : '🏪 Balcão'}</span></div>
+                        <div className="flex justify-between items-center border-b pb-4" style={{ borderColor: 'var(--border-color)' }}>
+                          <p className="text-[11px] font-black uppercase text-gray-500 tracking-widest">{order.customerName}</p>
+                          <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase" style={{ background: 'var(--bg-base)', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                            {order.deliveryMethod === 'delivery' ? '🛵 Entrega' : '🏪 Balcão'}
+                          </span>
+                        </div>
                         <div className="space-y-4">
                           {order.items.map((item, i) => (
-                            <div key={i} className="text-xl font-bold text-white tracking-tight"><span className="text-amber-500 mr-3 text-2xl font-black">{item.quantity}x</span> {item.name}</div>
+                            <div key={i} className="text-xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}><span className="text-amber-500 mr-3 text-2xl font-black">{item.quantity}x</span> {item.name}</div>
                           ))}
                         </div>
                       </div>
@@ -318,14 +327,14 @@ export default function OrderQueue({ kitchenOnly = false }) {
   return (
     <>
       {thermalReceipt}
-      <div className="space-y-8 pb-20 no-print animate-fade-in">
+      <div className="space-y-8 pb-20 no-print animate-fade-in transition-colors duration-500">
         <div className="flex items-center justify-between">
           <div onClick={() => { if(window.confirm('DEBUG: Forçar impressão teste?')) setPrintingOrder(orders[0]) }} className="cursor-help">
-            <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">Fila de <span className="text-amber-500">Pedidos</span></h2>
+            <h2 className="text-3xl font-black italic uppercase tracking-tighter" style={{ color: 'var(--text-primary)' }}>Fila de <span className="text-amber-500">Pedidos</span></h2>
             <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">{activeOrders.length} pedido(s) em andamento</p>
           </div>
           <div className="flex items-center gap-3">
-             <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-white/10">
+             <div className="flex items-center bg-white/5 p-1 rounded-2xl border border-[var(--border-color)]">
               <button onClick={() => setSoundEnabled(!soundEnabled)} className={`p-3 rounded-xl flex items-center gap-2 transition-all ${soundEnabled ? 'bg-amber-500/20 text-amber-400' : 'text-gray-600'}`}>
                 {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
                 <span className="text-[9px] font-black uppercase">Som</span>{soundEnabled ? <ToggleRight className="w-5 h-5 ml-1" /> : <ToggleLeft className="w-5 h-5 ml-1" />}
@@ -379,9 +388,12 @@ export default function OrderQueue({ kitchenOnly = false }) {
                 <div key={order.id} className={`rounded-[2rem] border transition-all ${config.bg} ${config.border}`}>
                   <div className="p-6 flex items-center justify-between cursor-pointer" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
                     <div className="flex items-center gap-5">
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${config.border} bg-black/20`}><config.icon className={`w-7 h-7 ${config.text}`} /></div>
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${config.border} bg-black/10`}><config.icon className={`w-7 h-7 ${config.text}`} /></div>
                       <div>
-                        <div className="flex items-center gap-3"><span className="text-xl font-black text-white italic">{order.id}</span><span className={`text-[8px] font-black uppercase px-2 py-1 rounded bg-black/20 ${config.text}`}>{config.label}</span></div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-xl font-black italic" style={{ color: 'var(--text-primary)' }}>{order.id}</span>
+                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded bg-black/20 ${config.text}`}>{config.label}</span>
+                        </div>
                         <p className="text-[10px] font-bold text-gray-500 uppercase mt-1">{order.customerName} • {getTimeSince(order.updatedAt || order.date)}</p>
                       </div>
                     </div>
@@ -396,8 +408,8 @@ export default function OrderQueue({ kitchenOnly = false }) {
                        <div className="space-y-3">
                           <p className="text-[9px] font-black uppercase text-gray-600 tracking-widest mb-2">Itens</p>
                           {order.items.map((item, i) => (
-                            <div key={i} className="p-4 rounded-2xl bg-white/[0.03] border border-white/5">
-                               <div className="flex justify-between font-bold text-white uppercase text-xs"><span>{item.quantity}x {item.name}</span><span>R$ {(item.finalPrice * item.quantity).toFixed(2)}</span></div>
+                            <div key={i} className="p-4 rounded-2xl bg-white/[0.03] border border-[var(--border-color)]">
+                               <div className="flex justify-between font-bold uppercase text-xs" style={{ color: 'var(--text-primary)' }}><span>{item.quantity}x {item.name}</span><span>R$ {(item.finalPrice * item.quantity).toFixed(2)}</span></div>
                                {item.customizations?.removedIngredients?.map((ing, j) => <div key={j} style={{ fontSize: '10px', marginLeft: '10px' }}>- SEM {ing.toUpperCase()}</div>)}
                                {item.customizations?.addons?.map((add, k) => <div key={k} style={{ fontSize: '10px', marginLeft: '10px' }}>+ {add.quantity}x {add.name}</div>)}
                                {item.customizations?.observation && <p className="text-[10px] text-amber-500 italic mt-1">Obs: {item.customizations.observation}</p>}
@@ -405,15 +417,15 @@ export default function OrderQueue({ kitchenOnly = false }) {
                           ))}
                        </div>
                        <div className="space-y-4">
-                          <div className="p-5 rounded-2xl bg-white/[0.03] border border-white/5 space-y-2">
+                          <div className="p-5 rounded-2xl bg-white/[0.03] border border-[var(--border-color)] space-y-2">
                              <p className="text-[9px] font-black uppercase text-gray-600 tracking-widest">Informações</p>
-                             <p className="text-xs text-white"><strong>Telefone:</strong> {order.customerPhone}</p>
-                             <p className="text-xs text-white"><strong>Pagamento:</strong> {PAYMENT_LABELS[order.paymentMethod]}</p>
-                             {order.address && <p className="text-xs text-white"><strong>Endereço:</strong> {order.address.street}, {order.address.number}</p>}
+                             <p className="text-xs" style={{ color: 'var(--text-primary)' }}><strong>Telefone:</strong> {order.customerPhone}</p>
+                             <p className="text-xs" style={{ color: 'var(--text-primary)' }}><strong>Pagamento:</strong> {PAYMENT_LABELS[order.paymentMethod]}</p>
+                             {order.address && <p className="text-xs" style={{ color: 'var(--text-primary)' }}><strong>Endereço:</strong> {order.address.street}, {order.address.number}</p>}
                           </div>
                           <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex justify-between items-center">
                              <span className="text-xs font-black text-amber-500 uppercase">Total do Pedido</span>
-                             <span className="text-2xl font-black text-white italic">R$ {order.total.toFixed(2)}</span>
+                             <span className="text-2xl font-black italic" style={{ color: 'var(--text-primary)' }}>R$ {order.total.toFixed(2)}</span>
                           </div>
                        </div>
                     </div>
