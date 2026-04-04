@@ -36,7 +36,7 @@ const STATUS_CONFIG = {
   'EM ROTA':  { label: 'Em Rota',    icon: Bike,         bg: 'bg-fuchsia-500/30',border: 'border-fuchsia-500/60',text: 'text-fuchsia-400',glow: 'shadow-[0_0_40px_rgba(217,70,239,0.4)]' },
   ENTREGUE:   { label: 'Entregue',   icon: CheckCircle2, bg: 'bg-emerald-500/15',border: 'border-emerald-500/30',text: 'text-emerald-400',glow: '' },
   RETIRADO:   { label: 'Retirado',   icon: Store,        bg: 'bg-emerald-500/15',border: 'border-emerald-500/30',text: 'text-emerald-400',glow: '' },
-  CANCELADO:  { label: 'Cancelado',  icon: XCircle,      bg: 'bg-red-500/15',    border: 'border-red-500/30',   text: 'text-red-400',    glow: '' },
+  CANCELADO:  { label: 'Cancelado',  icon: XCircle,      bg: 'bg-red-500/25',    border: 'border-red-600',      text: 'text-red-400',    glow: 'shadow-[0_0_50px_rgba(239,68,68,0.5)]' },
 }
 
 const PAYMENT_LABELS = { pix: 'PIX', card: 'Cartão', cash: 'Dinheiro' }
@@ -284,7 +284,16 @@ export default function OrderQueue({ kitchenOnly = false }) {
                   const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.RECEBIDO
                   const nextStatus = getNextStatus(order); const prevStatus = getPrevStatus(order)
                   return (
-                    <div key={order.id} className={`rounded-[2.5rem] border-2 overflow-hidden shadow-2xl transition-all duration-500 ${config.border}`} style={{ backgroundColor: 'var(--bg-card)' }}>
+                    <div key={order.id} className={`rounded-[2.5rem] border-2 overflow-hidden shadow-2xl transition-all duration-500 ${config.border} ${order.status === 'CANCELADO' ? config.glow : ''}`} style={{ backgroundColor: 'var(--bg-card)' }}>
+                      {order.status === 'CANCELADO' && (
+                        <div className="flex items-center gap-3 px-6 py-4 bg-red-600">
+                          <XCircle className="w-6 h-6 text-white animate-pulse shrink-0" />
+                          <div>
+                            <p className="text-sm font-black text-white uppercase tracking-widest leading-none">Cancelado</p>
+                            <p className="text-[10px] text-red-200 font-bold">Pare a producao</p>
+                          </div>
+                        </div>
+                      )}
                       <div className={`p-6 flex justify-between items-center ${config.bg}`}>
                         <div className="flex items-center gap-4"><config.icon className={`w-8 h-8 ${config.text}`} /><span className="text-3xl font-black italic tracking-tighter" style={{ color: 'var(--text-primary)' }}>{order.id}</span></div>
                         <div className="flex items-center gap-3">
@@ -299,7 +308,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
                         <div className="flex justify-between items-center border-b pb-4" style={{ borderColor: 'var(--border-color)' }}>
                           <p className="text-[11px] font-black uppercase text-gray-500 tracking-widest">{order.customerName}</p>
                           <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase" style={{ background: 'var(--bg-base)', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                            {order.deliveryMethod === 'delivery' ? '🛵 Entrega' : '🏪 Balcão'}
+                            {order.deliveryMethod === 'delivery' ? 'Entrega' : 'Balcão'}
                           </span>
                         </div>
                         <div className="space-y-4">
@@ -385,7 +394,16 @@ export default function OrderQueue({ kitchenOnly = false }) {
               const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.RECEBIDO
               const isExpanded = expandedOrder === order.id; const nextStatus = getNextStatus(order); const prevStatus = getPrevStatus(order)
               return (
-                <div key={order.id} className={`rounded-[2rem] border transition-all ${config.bg} ${config.border}`}>
+                <div key={order.id} className={`rounded-[2rem] border transition-all ${config.bg} ${config.border} ${order.status === 'CANCELADO' ? config.glow : ''}`}>
+                  {order.status === 'CANCELADO' && (
+                    <div className="flex items-center gap-4 px-6 py-4 bg-red-600 rounded-t-[2rem]">
+                      <XCircle className="w-6 h-6 text-white shrink-0 animate-pulse" />
+                      <div>
+                        <p className="text-sm font-black text-white uppercase tracking-widest leading-none">Pedido Cancelado pelo Cliente</p>
+                        <p className="text-[11px] text-red-200 font-bold mt-0.5">Interrompa a produção imediatamente</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="p-6 flex items-center justify-between cursor-pointer" onClick={() => setExpandedOrder(isExpanded ? null : order.id)}>
                     <div className="flex items-center gap-5">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${config.border} bg-black/10`}><config.icon className={`w-7 h-7 ${config.text}`} /></div>

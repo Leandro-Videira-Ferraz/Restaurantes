@@ -23,7 +23,7 @@ import { useOrders } from '../store/OrdersContext'
 export default function Checkout() {
   const navigate = useNavigate()
   const { cart, clearCart } = useCart()
-  const { state } = useStore()
+  const { state, dispatch: storeDispatch } = useStore()
   const { user, dispatch: userDispatch } = useUser()
   const { dispatch: ordersDispatch } = useOrders()
   const { settings } = state
@@ -71,6 +71,10 @@ export default function Checkout() {
     }
     if (found.minOrder > 0 && cart.total < found.minOrder) {
       setCouponError(`Pedido mínimo de R$ ${found.minOrder.toFixed(2)} para este cupom.`)
+      return
+    }
+    if (found.maxUses > 0 && (found.usedCount || 0) >= found.maxUses) {
+      setCouponError('Este cupom atingiu o limite de usos.')
       return
     }
     setAppliedCoupon(found)
@@ -163,7 +167,15 @@ export default function Checkout() {
     // 4. Enviar para a Fila de Pedidos do Restaurante
     ordersDispatch({ type: 'ADD_ORDER', payload: newOrder })
 
-    // 5. Limpar Carrinho e mostrar sucesso
+    // 5. Incrementar uso do cupom (se aplicado)
+    if (appliedCoupon) {
+      const updatedCoupons = (settings.coupons || []).map(c =>
+        c.id === appliedCoupon.id ? { ...c, usedCount: (c.usedCount || 0) + 1 } : c
+      )
+      storeDispatch({ type: 'UPDATE_SETTINGS', payload: { coupons: updatedCoupons } })
+    }
+
+    // 6. Limpar Carrinho e mostrar sucesso
     setStep(4)
     clearCart()
   }

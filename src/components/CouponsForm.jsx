@@ -9,7 +9,7 @@ export default function CouponsForm() {
   const { state, dispatch } = useStore()
   const coupons = state.settings.coupons || []
 
-  const [form, setForm] = useState({ code: '', type: 'percent', value: '', minOrder: '' })
+  const [form, setForm] = useState({ code: '', type: 'percent', value: '', minOrder: '', maxUses: '' })
 
   const addCoupon = () => {
     if (!form.code || (form.type !== 'shipping' && !form.value)) return
@@ -19,10 +19,12 @@ export default function CouponsForm() {
       type: form.type,
       value: parseFloat(form.value) || 0,
       minOrder: parseFloat(form.minOrder) || 0,
+      maxUses: parseInt(form.maxUses) || 0,
+      usedCount: 0,
       active: true,
     }]
     dispatch({ type: 'UPDATE_SETTINGS', payload: { coupons: updated } })
-    setForm({ code: '', type: 'percent', value: '', minOrder: '' })
+    setForm({ code: '', type: 'percent', value: '', minOrder: '', maxUses: '' })
   }
 
   const toggleCoupon = (id) => {
@@ -100,6 +102,20 @@ export default function CouponsForm() {
                   className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500/30 mt-1 font-bold"
                 />
               </div>
+
+              <div>
+                <label className="text-[9px] font-black text-gray-600 uppercase tracking-widest ml-1">
+                  Limite de Usos <span className="text-gray-700">(opcional)</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="Ilimitado"
+                  value={form.maxUses}
+                  onChange={e => setForm({ ...form, maxUses: e.target.value })}
+                  className="w-full bg-black/40 border border-white/5 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-amber-500/30 mt-1 font-bold"
+                />
+              </div>
             </div>
 
             <button
@@ -139,6 +155,15 @@ export default function CouponsForm() {
                           {coupon.type === 'fixed' && `R$ ${coupon.value.toFixed(2)} de desconto`}
                           {coupon.type === 'shipping' && 'Frete grátis'}
                           {coupon.minOrder > 0 ? ` · Mín. R$ ${coupon.minOrder.toFixed(2)}` : ''}
+                        </p>
+                        <p className="text-[10px] font-bold mt-0.5">
+                          {coupon.maxUses > 0 ? (
+                            <span className={coupon.usedCount >= coupon.maxUses ? 'text-red-500' : 'text-gray-600'}>
+                              {coupon.usedCount || 0}/{coupon.maxUses} usos
+                            </span>
+                          ) : (
+                            <span className="text-gray-700">{coupon.usedCount || 0} usos · ilimitado</span>
+                          )}
                         </p>
                       </div>
                     </div>
