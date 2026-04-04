@@ -29,8 +29,15 @@ function userReducer(state, action) {
       return { ...state, orders: newOrders }
     }
     case 'UPDATE_ORDER_STATUS': {
-        const newOrders = state.orders.map(o => 
+        const newOrders = state.orders.map(o =>
             o.id === action.payload.id ? { ...o, status: action.payload.status } : o
+        )
+        localStorage.setItem('user_orders', JSON.stringify(newOrders))
+        return { ...state, orders: newOrders }
+    }
+    case 'CANCEL_ORDER': {
+        const newOrders = state.orders.map(o =>
+            o.id === action.payload ? { ...o, status: 'CANCELADO' } : o
         )
         localStorage.setItem('user_orders', JSON.stringify(newOrders))
         return { ...state, orders: newOrders }

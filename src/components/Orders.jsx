@@ -1,15 +1,14 @@
+import { useState } from 'react'
 import { useUser } from '../store/UserContext'
 import { useOrders, STATUS_FLOW, STATUS_FLOW_PICKUP } from '../store/OrdersContext'
+import { useStore } from '../store/StoreContext'
 import { useNavigate } from 'react-router-dom'
-import { 
-  ChevronLeft, 
-  Package, 
-  Clock, 
-  MapPin, 
-  CheckCircle2, 
-  Timer,
+import {
+  ChevronLeft,
+  Clock,
+  MapPin,
+  CheckCircle2,
   ShoppingBag,
-  ArrowRight,
   ChefHat,
   PackageCheck,
   Bike,
@@ -17,7 +16,8 @@ import {
   Store,
   Bell,
   CreditCard,
-  MessageCircle
+  MessageCircle,
+  AlertTriangle
 } from 'lucide-react'
 
 const STATUS_CONFIG = {
@@ -33,9 +33,11 @@ const STATUS_CONFIG = {
 const PAYMENT_LABELS = { pix: 'PIX', card: 'Cartão', cash: 'Dinheiro' }
 
 export default function Orders() {
-  const { user } = useUser()
-  const { orders: adminOrders } = useOrders()
+  const { user, dispatch: userDispatch } = useUser()
+  const { orders: adminOrders, dispatch: ordersDispatch } = useOrders()
+  const { state } = useStore()
   const navigate = useNavigate()
+  const [cancellingId, setCancellingId] = useState(null)
 
   // Mesclar pedidos: usa a lista do UserContext mas pega o status atualizado do OrdersContext
   const mergedOrders = user.orders.map(userOrder => {
@@ -45,9 +47,14 @@ export default function Orders() {
       : userOrder
   })
 
-  // Separar ativos e finalizados
   const activeOrders = mergedOrders.filter(o => !['ENTREGUE', 'RETIRADO', 'CANCELADO'].includes(o.status))
   const pastOrders = mergedOrders.filter(o => ['ENTREGUE', 'RETIRADO', 'CANCELADO'].includes(o.status))
+
+  const confirmCancel = (orderId) => {
+    userDispatch({ type: 'CANCEL_ORDER', payload: orderId })
+    ordersDispatch({ type: 'CANCEL_ORDER', payload: orderId })
+    setCancellingId(null)
+  }
 
   return (
     <div className="min-h-screen pb-20 animate-fade-in">
@@ -85,7 +92,13 @@ export default function Orders() {
                   Pedidos em Andamento ({activeOrders.length})
                 </h3>
                 {activeOrders.map(order => (
-                  <OrderCard key={order.id} order={order} isActive={true} />
+                  <OrderCard
+                    key={order.id}
+                    order={order}
+                    isActive={true}
+                    settings={state.settings}
+                    onRequestCancel={() => setCancellingId(order.id)}
+                  />
                 ))}
               </div>
             )}
@@ -97,8 +110,40 @@ export default function Orders() {
                   Histórico ({pastOrders.length})
                 </h3>
                 {pastOrders.map(order => (
-                  <OrderCard key={order.id} order={order} isActive={false} />
+                  <OrderCard key={order.id} order={order} isActive={false} settings={state.settings} />
                 ))}
+              </div>
+            )}
+
+            {/* Modal de Confirmação de Cancelamento */}
+            {cancellingId && (
+              <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+                <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setCancellingId(null)} />
+                <div className="glass-card max-w-sm w-full p-8 border-red-500/20 relative z-10 space-y-6 text-center animate-slide-up">
+                  <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto text-red-500">
+                    <AlertTriangle className="w-8 h-8" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-black text-white italic uppercase">Cancelar Pedido?</h3>
+                    <p className="text-sm text-gray-400 font-medium leading-relaxed">
+                      Essa ação não pode ser desfeita. Confirme apenas se desejar cancelar o pedido.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCancellingId(null)}
+                      className="flex-1 px-4 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                    >
+                      Voltar
+                    </button>
+                    <button
+                      onClick={() => confirmCancel(cancellingId)}
+                      className="flex-1 px-4 py-4 bg-red-500 hover:bg-red-400 text-black rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+                    >
+                      Cancelar Pedido
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </>
@@ -108,12 +153,17 @@ export default function Orders() {
   )
 }
 
-function OrderCard({ order, isActive }) {
+function OrderCard({ order, isActive, settings, onRequestCancel }) {
   const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.RECEBIDO
   const Icon = config.icon
   const flow = order.deliveryMethod === 'pickup' ? STATUS_FLOW_PICKUP : STATUS_FLOW
   const currentIdx = flow.indexOf(order.status)
   const isCancelled = order.status === 'CANCELADO'
+
+  const canCancel = order.status === 'RECEBIDO'
+  const estimatedTime = order.deliveryMethod === 'delivery'
+    ? (settings?.estimatedDeliveryTime || 40)
+    : (settings?.estimatedPickupTime || 20)
 
   return (
     <div className={`glass-card overflow-hidden transition-all ${isActive ? `border ${config.border} animate-pulse-subtle` : 'border-white/5 opacity-80'}`}>
@@ -127,6 +177,19 @@ function OrderCard({ order, isActive }) {
             <p className={`text-sm font-black uppercase tracking-widest ${config.text}`}>{config.label}</p>
             <p className="text-[11px] text-gray-400 font-medium mt-0.5">{config.description}</p>
           </div>
+        </div>
+      )}
+
+      {/* Tempo estimado — apenas pedidos em andamento (não pronto/rota/entregue) */}
+      {isActive && !isCancelled && ['RECEBIDO', 'PREPARANDO'].includes(order.status) && (
+        <div className="px-6 py-3 bg-amber-500/5 border-b border-white/5 flex items-center gap-3">
+          <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+          <p className="text-[11px] font-bold text-gray-400">
+            Previsão:{' '}
+            <span className="text-amber-500 font-black">
+              ~{estimatedTime} min {order.deliveryMethod === 'delivery' ? 'para entrega' : 'para retirada'}
+            </span>
+          </p>
         </div>
       )}
 
@@ -255,6 +318,18 @@ function OrderCard({ order, isActive }) {
               </div>
             </div>
          </div>
+
+         {/* Cancelar — só visível quando status é RECEBIDO */}
+         {isActive && canCancel && onRequestCancel && (
+           <div className="pt-3 border-t border-white/5">
+             <button
+               onClick={onRequestCancel}
+               className="w-full py-3 rounded-xl border border-red-500/20 text-red-500/80 hover:bg-red-500/10 hover:text-red-500 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+             >
+               Cancelar Pedido
+             </button>
+           </div>
+         )}
       </div>
     </div>
   )

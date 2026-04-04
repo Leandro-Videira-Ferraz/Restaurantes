@@ -1,4 +1,4 @@
-import { Bike, ShieldCheck, MapPin, Plus, Trash2, Save } from 'lucide-react'
+import { Bike, ShieldCheck, MapPin, Plus, Trash2, Clock, ShoppingCart } from 'lucide-react'
 import { useStore } from '../store/StoreContext'
 import { useState } from 'react'
 
@@ -36,6 +36,69 @@ export default function DeliveryForm() {
         <div>
           <h2 className="text-3xl font-black text-white tracking-tight italic uppercase">Gestão de <span className="text-amber-500">Entrega</span></h2>
           <p className="text-sm text-gray-400 font-medium mt-1">Configure as taxas que seus clientes pagarão</p>
+        </div>
+      </div>
+
+      {/* Configs Operacionais */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="glass-card p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="w-5 h-5 text-amber-500" />
+            <h3 className="text-sm font-black text-white uppercase italic">Pedido Mínimo</h3>
+          </div>
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Valor mínimo para delivery</p>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500 font-black text-xs">R$</span>
+            <input
+              type="number"
+              step="0.50"
+              min="0"
+              placeholder="0,00"
+              value={settings.minimumOrderValue ?? 0}
+              onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { minimumOrderValue: parseFloat(e.target.value) || 0 } })}
+              className="w-full bg-black/40 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-lg font-black text-white italic focus:outline-none focus:border-amber-500/50"
+            />
+          </div>
+        </div>
+
+        <div className="glass-card p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <Bike className="w-5 h-5 text-purple-400" />
+            <h3 className="text-sm font-black text-white uppercase italic">Tempo Delivery</h3>
+          </div>
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Estimativa em minutos</p>
+          <div className="relative">
+            <input
+              type="number"
+              step="5"
+              min="1"
+              placeholder="40"
+              value={settings.estimatedDeliveryTime ?? 40}
+              onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { estimatedDeliveryTime: parseInt(e.target.value) || 40 } })}
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-white italic focus:outline-none focus:border-amber-500/50"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-[10px] uppercase tracking-widest">min</span>
+          </div>
+        </div>
+
+        <div className="glass-card p-6 space-y-3">
+          <div className="flex items-center gap-3">
+            <Clock className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-sm font-black text-white uppercase italic">Tempo Retirada</h3>
+          </div>
+          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Estimativa em minutos</p>
+          <div className="relative">
+            <input
+              type="number"
+              step="5"
+              min="1"
+              placeholder="20"
+              value={settings.estimatedPickupTime ?? 20}
+              onChange={e => dispatch({ type: 'UPDATE_SETTINGS', payload: { estimatedPickupTime: parseInt(e.target.value) || 20 } })}
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-lg font-black text-white italic focus:outline-none focus:border-amber-500/50"
+            />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-black text-[10px] uppercase tracking-widest">min</span>
+          </div>
         </div>
       </div>
 

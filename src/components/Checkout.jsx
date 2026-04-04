@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { 
-  User, 
-  MapPin, 
-  CreditCard, 
-  ChevronLeft, 
-  CheckCircle2, 
-  Bike, 
+import {
+  User,
+  MapPin,
+  CreditCard,
+  ChevronLeft,
+  CheckCircle2,
+  Bike,
   Store,
   MessageCircle,
-  ArrowRight
+  ArrowRight,
+  Tag,
+  X,
+  Clock,
+  AlertCircle
 } from 'lucide-react'
 import { useCart } from '../store/CartContext'
 import { useStore } from '../store/StoreContext'
@@ -38,6 +42,53 @@ export default function Checkout() {
     paymentMethod: 'pix', // 'pix', 'card', 'cash'
     change: ''
   })
+
+  const [couponInput, setCouponInput] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [couponError, setCouponError] = useState('')
+
+  const getDeliveryFee = () => {
+    if (formData.deliveryMethod !== 'delivery') return 0
+    if (appliedCoupon?.type === 'shipping') return 0
+    return (settings.useNeighborhoodFees && settings.neighborhoodFees?.find(n => n.name === formData.address.neighborhood)?.fee) || settings.deliveryFee
+  }
+
+  const getDiscount = () => {
+    if (!appliedCoupon) return 0
+    if (appliedCoupon.type === 'percent') return cart.total * (appliedCoupon.value / 100)
+    if (appliedCoupon.type === 'fixed') return Math.min(appliedCoupon.value, cart.total)
+    return 0
+  }
+
+  const getFinalTotal = () => cart.total + getDeliveryFee() - getDiscount()
+
+  const applyCoupon = () => {
+    const coupons = settings.coupons || []
+    const found = coupons.find(c => c.code === couponInput.toUpperCase().trim() && c.active)
+    if (!found) {
+      setCouponError('Cupom inválido ou expirado.')
+      return
+    }
+    if (found.minOrder > 0 && cart.total < found.minOrder) {
+      setCouponError(`Pedido mínimo de R$ ${found.minOrder.toFixed(2)} para este cupom.`)
+      return
+    }
+    setAppliedCoupon(found)
+    setCouponError('')
+  }
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponInput('')
+    setCouponError('')
+  }
+
+  const minimumOrderValue = settings.minimumOrderValue || 0
+  const belowMinimum = formData.deliveryMethod === 'delivery' && minimumOrderValue > 0 && cart.total < minimumOrderValue
+
+  const estimatedTime = formData.deliveryMethod === 'delivery'
+    ? (settings.estimatedDeliveryTime || 40)
+    : (settings.estimatedPickupTime || 20)
 
   // Se o carrinho estiver vazio, volta para o menu
   if (cart.items.length === 0 && step !== 4) {
@@ -69,10 +120,8 @@ export default function Checkout() {
     })
 
     // 2. Criar Objeto do Pedido
-    const deliveryFee = formData.deliveryMethod === 'delivery' 
-        ? ((settings.useNeighborhoodFees && settings.neighborhoodFees?.find(n => n.name === formData.address.neighborhood)?.fee) || settings.deliveryFee)
-        : 0
-
+    const deliveryFee = getDeliveryFee()
+    const discount = getDiscount()
     const orderId = `#${Math.floor(1000 + Math.random() * 9000)}`
 
     // Normalizar itens: empacotar personalizações em 'customizations'
@@ -95,8 +144,10 @@ export default function Checkout() {
       date: new Date().toISOString(),
       items: orderItems,
       subtotal: cart.total,
-      deliveryFee: deliveryFee,
-      total: cart.total + deliveryFee,
+      deliveryFee,
+      discount,
+      couponCode: appliedCoupon?.code || '',
+      total: getFinalTotal(),
       status: 'RECEBIDO',
       paymentMethod: formData.paymentMethod,
       change: formData.paymentMethod === 'cash' ? formData.change : '',
@@ -286,9 +337,20 @@ export default function Checkout() {
               </div>
             )}
 
-            <button 
+            {belowMinimum && (
+              <div className="flex items-center gap-3 p-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <p className="text-xs font-bold text-red-400">
+                  Pedido mínimo para delivery: <span className="font-black text-red-500">R$ {minimumOrderValue.toFixed(2)}</span>.
+                  Seu subtotal é R$ {cart.total.toFixed(2)}.
+                </p>
+              </div>
+            )}
+
+            <button
               onClick={nextStep}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl flex items-center justify-center gap-3 cursor-pointer"
+              disabled={belowMinimum}
+              className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-black h-16 rounded-2xl font-black uppercase tracking-widest text-xs transition-all shadow-xl flex items-center justify-center gap-3 cursor-pointer"
             >
               Escolher Pagamento
               <ArrowRight className="w-4 h-4" />
@@ -341,35 +403,83 @@ export default function Checkout() {
                )}
             </div>
 
+            {/* Campo de Cupom */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Cupom de Desconto</label>
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-green-500/10 border border-green-500/20">
+                  <div className="flex items-center gap-3">
+                    <Tag className="w-4 h-4 text-green-500" />
+                    <div>
+                      <p className="text-sm font-black text-green-500 tracking-widest">{appliedCoupon.code}</p>
+                      <p className="text-[10px] text-gray-400 font-bold">
+                        {appliedCoupon.type === 'percent' && `-${appliedCoupon.value}%`}
+                        {appliedCoupon.type === 'fixed' && `-R$ ${appliedCoupon.value.toFixed(2)}`}
+                        {appliedCoupon.type === 'shipping' && 'Frete grátis'}
+                      </p>
+                    </div>
+                  </div>
+                  <button onClick={removeCoupon} className="p-1.5 rounded-lg bg-white/5 hover:bg-red-500/10 text-gray-500 hover:text-red-500 transition-all cursor-pointer">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Digite o código do cupom"
+                    value={couponInput}
+                    onChange={e => { setCouponInput(e.target.value.toUpperCase()); setCouponError('') }}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white font-black tracking-widest focus:outline-none focus:border-amber-500/30"
+                  />
+                  <button
+                    onClick={applyCoupon}
+                    disabled={!couponInput}
+                    className="px-5 bg-amber-500 hover:bg-amber-400 disabled:opacity-30 text-black rounded-xl font-black text-xs uppercase tracking-widest transition-all cursor-pointer"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              )}
+              {couponError && <p className="text-[10px] text-red-500 font-bold ml-1">{couponError}</p>}
+            </div>
+
             {/* Resumo de Valores */}
             <div className="glass-card p-8 space-y-4 border-white/5">
-               <div className="flex justify-between items-center text-gray-500">
-                  <span className="text-[10px] font-black uppercase tracking-widest">Subtotal</span>
-                  <span className="text-sm font-bold">R$ {cart.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-               </div>
-               
-               {formData.deliveryMethod === 'delivery' && (
-                 <div className="flex justify-between items-center text-amber-500/80">
-                    <span className="text-[10px] font-black uppercase tracking-widest">
-                      Taxa de Entrega {settings.useNeighborhoodFees ? `(${formData.address.neighborhood || 'Padrão'})` : '(Padrão)'}
-                    </span>
-                    <span className="text-sm font-bold">+ R$ {(
-                      (settings.useNeighborhoodFees && settings.neighborhoodFees?.find(n => n.name === formData.address.neighborhood)?.fee) || settings.deliveryFee
-                    ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                 </div>
-               )}
+              <div className="flex justify-between items-center text-gray-500">
+                <span className="text-[10px] font-black uppercase tracking-widest">Subtotal</span>
+                <span className="text-sm font-bold">R$ {cart.total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
 
-               <div className="h-px bg-white/5 w-full"></div>
+              {formData.deliveryMethod === 'delivery' && (
+                <div className="flex justify-between items-center text-amber-500/80">
+                  <span className="text-[10px] font-black uppercase tracking-widest">
+                    Taxa de Entrega {appliedCoupon?.type === 'shipping' ? '(Cupom Aplicado)' : settings.useNeighborhoodFees ? `(${formData.address.neighborhood || 'Padrão'})` : '(Padrão)'}
+                  </span>
+                  {appliedCoupon?.type === 'shipping' ? (
+                    <span className="text-sm font-bold text-green-500">Grátis</span>
+                  ) : (
+                    <span className="text-sm font-bold">+ R$ {getDeliveryFee().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                  )}
+                </div>
+              )}
 
-               <div className="flex justify-between items-baseline pt-2">
-                 <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>Total Geral</span>
-                 <span className="text-4xl font-black italic" style={{ color: 'var(--text-primary)' }}>
-                   <span className="text-xs text-amber-500 mr-1 not-italic">R$</span>
-                   {(
-                     cart.total + (formData.deliveryMethod === 'delivery' ? ((settings.useNeighborhoodFees && settings.neighborhoodFees?.find(n => n.name === formData.address.neighborhood)?.fee) || settings.deliveryFee) : 0)
-                   ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                 </span>
-               </div>
+              {appliedCoupon && appliedCoupon.type !== 'shipping' && (
+                <div className="flex justify-between items-center text-green-500">
+                  <span className="text-[10px] font-black uppercase tracking-widest">Desconto ({appliedCoupon.code})</span>
+                  <span className="text-sm font-bold">- R$ {getDiscount().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                </div>
+              )}
+
+              <div className="h-px bg-white/5 w-full"></div>
+
+              <div className="flex justify-between items-baseline pt-2">
+                <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'var(--text-primary)' }}>Total Geral</span>
+                <span className="text-4xl font-black italic" style={{ color: 'var(--text-primary)' }}>
+                  <span className="text-xs text-amber-500 mr-1 not-italic">R$</span>
+                  {getFinalTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </span>
+              </div>
             </div>
 
             <button 
@@ -397,8 +507,25 @@ export default function Checkout() {
                </p>
              </div>
 
-             <div className="w-full max-w-xs space-y-4 pt-8">
-               <button 
+             <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+               <Clock className="w-5 h-5 text-amber-500 shrink-0" />
+               <div className="text-left">
+                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Tempo estimado</p>
+                 <p className="text-sm font-black text-white">
+                   {formData.deliveryMethod === 'delivery' ? 'Entrega em' : 'Pronto para retirada em'}{' '}
+                   <span className="text-amber-500">~{estimatedTime} minutos</span>
+                 </p>
+               </div>
+             </div>
+
+             <div className="w-full max-w-xs space-y-4 pt-4">
+               <button
+                onClick={() => navigate('/orders')}
+                className="w-full bg-amber-500 hover:bg-amber-400 text-black h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
+               >
+                 Acompanhar Pedido
+               </button>
+               <button
                 onClick={() => navigate('/')}
                 className="w-full bg-white/5 hover:bg-white/10 text-white h-16 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all"
                >

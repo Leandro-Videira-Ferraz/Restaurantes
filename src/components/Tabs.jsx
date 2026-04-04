@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Tag, ShoppingBag, Settings as SettingsIcon, Bike, Power, AlertTriangle, Layers, ClipboardList } from 'lucide-react'
+import { Tag, ShoppingBag, Settings as SettingsIcon, Bike, Power, AlertTriangle, Layers, ClipboardList, Ticket } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore, checkOpenStatus } from '../store/StoreContext'
 import { useOrders } from '../store/OrdersContext'
@@ -10,6 +10,7 @@ const tabs = [
   { id: 'products', label: 'Produtos', icon: ShoppingBag, path: '/admin/products' },
   { id: 'addons', label: 'Adicionais', icon: Layers, path: '/admin/addons' },
   { id: 'delivery', label: 'Entrega', icon: Bike, path: '/admin/delivery' },
+  { id: 'coupons', label: 'Cupons', icon: Ticket, path: '/admin/coupons' },
   { id: 'settings', label: 'Configurações', icon: SettingsIcon, path: '/admin/settings' },
 ]
 
