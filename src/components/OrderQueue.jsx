@@ -81,6 +81,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
   const [autoAccept, setAutoAccept] = useState(() => localStorage.getItem('burger-auto-accept') === 'true')
   const [autoPrint, setAutoPrint] = useState(() => localStorage.getItem('burger-auto-print') === 'true')
   const [printingOrder, setPrintingOrder] = useState(null)
+  const [cancellingOrderId, setCancellingOrderId] = useState(null)
   const [tick, setTick] = useState(0)
   const [audioBlocked, setAudioBlocked] = useState(false)
   const processedIdsRef = useRef(new Set())
@@ -161,6 +162,11 @@ export default function OrderQueue({ kitchenOnly = false }) {
     dispatch({ type: 'REVERT_STATUS', payload: orderId })
   }
 
+  function handleCancel(orderId) {
+    dispatch({ type: 'CANCEL_ORDER', payload: orderId })
+    setCancellingOrderId(null)
+  }
+
   useEffect(() => {
     if (!autoAccept) return
     activeOrders.filter(o => o.status === 'RECEBIDO').forEach(order => {
@@ -194,6 +200,38 @@ export default function OrderQueue({ kitchenOnly = false }) {
   orders.forEach(o => { statusCounts[o.status] = (statusCounts[o.status] || 0) + 1 })
 
   const displayOrders = filter === 'active' ? activeOrders : filter === 'completed' ? completedOrders : orders
+
+  // Modal de confirmação de cancelamento
+  const cancelModal = cancellingOrderId && (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setCancellingOrderId(null)} />
+      <div className="glass-card max-w-sm w-full p-8 border-red-500/30 relative z-10 space-y-6 text-center animate-slide-up">
+        <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto">
+          <AlertTriangle className="w-10 h-10 text-red-500" />
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-2xl font-black text-white italic uppercase tracking-tight">Cancelar Pedido?</h3>
+          <p className="text-sm text-gray-400 font-medium leading-relaxed">
+            O pedido <span className="text-red-500 font-black">{cancellingOrderId}</span> será marcado como cancelado e a produção deve ser interrompida.
+          </p>
+        </div>
+        <div className="pt-4 flex gap-4">
+          <button
+            onClick={() => setCancellingOrderId(null)}
+            className="flex-1 px-6 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
+          >
+            Voltar
+          </button>
+          <button
+            onClick={() => handleCancel(cancellingOrderId)}
+            className="flex-1 px-6 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-xl shadow-red-600/30 cursor-pointer"
+          >
+            Sim, Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 
   // RECUBO TÉRMICO DEFINITIVO (Fora de qualquer contexto flex)
   const thermalReceipt = printingOrder && (
@@ -240,6 +278,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
     return (
       <>
         {thermalReceipt}
+        {cancelModal}
         <div className="min-h-screen flex flex-col no-print transition-colors duration-500" style={{ background: 'var(--bg-base)', color: 'var(--text-primary)' }}>
           {/* Header e Grade da Cozinha */}
           <div className="flex items-center justify-between px-8 py-6 border-b shadow-2xl transition-all duration-500" style={{ backgroundColor: 'var(--bg-header)', borderColor: 'var(--border-color)' }}>
@@ -297,6 +336,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
                       <div className={`p-6 flex justify-between items-center ${config.bg}`}>
                         <div className="flex items-center gap-4"><config.icon className={`w-8 h-8 ${config.text}`} /><span className="text-3xl font-black italic tracking-tighter" style={{ color: 'var(--text-primary)' }}>{order.id}</span></div>
                         <div className="flex items-center gap-3">
+                          {order.status !== 'CANCELADO' && <button onClick={() => setCancellingOrderId(order.id)} className="p-3 rounded-xl bg-red-500/10 text-red-500/60 hover:bg-red-500/20 hover:text-red-400 transition-all border border-red-500/10" title="Cancelar pedido"><XCircle className="w-5 h-5" /></button>}
                           {prevStatus && <button onClick={() => handleRevert(order.id)} className="p-3 rounded-xl bg-black/10 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all border border-black/5 dark:bg-black/30 dark:text-white/40 dark:hover:text-white dark:border-white/5"><RotateCcw className="w-5 h-5" /></button>}
                           <div className="text-right">
                              <p className="text-[10px] font-black uppercase opacity-40 mb-0.5 tracking-tighter" style={{ color: 'var(--text-primary)' }}>Tempo Fila</p>
@@ -416,6 +456,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                       {order.status !== 'CANCELADO' && <button onClick={(e) => { e.stopPropagation(); setCancellingOrderId(order.id) }} className="p-3 rounded-xl bg-red-500/10 text-red-500/60 hover:bg-red-500/20 hover:text-red-400 transition-all" title="Cancelar pedido"><XCircle className="w-5 h-5"/></button>}
                        {prevStatus && <button onClick={(e) => { e.stopPropagation(); handleRevert(order.id) }} className="p-3 rounded-xl bg-white/5 text-gray-500 hover:text-white transition-all"><RotateCcw className="w-5 h-5"/></button>}
                        <button onClick={(e) => { e.stopPropagation(); triggerPrint(order) }} className="p-3 rounded-xl bg-white/5 text-gray-400 hover:text-white transition-all"><Printer className="w-5 h-5"/></button>
                        {nextStatus && <button onClick={(e) => { e.stopPropagation(); handleAdvance(order.id) }} className="px-6 py-3 rounded-xl bg-white text-black font-black uppercase text-[10px] hover:bg-amber-500 transition-all font-sans">{order.status === 'RECEBIDO' ? 'Aceitar' : `→ ${STATUS_CONFIG[nextStatus].label}`}</button>}
