@@ -238,7 +238,7 @@ function OrderCard({ order, isActive, settings, onRequestCancel }) {
                 </span>
               )}
               <span className="text-[8px] font-bold text-gray-600 uppercase tracking-widest px-2 py-1 rounded-lg bg-white/5">
-                {order.deliveryMethod === 'delivery' ? '🛵 Delivery' : '🏪 Retirada'}
+                {order.deliveryMethod === 'delivery' ? 'Delivery' : 'Retirada'}
               </span>
             </div>
             <p className="text-[10px] font-bold text-gray-500">
