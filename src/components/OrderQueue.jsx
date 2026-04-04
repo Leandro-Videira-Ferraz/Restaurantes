@@ -265,6 +265,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
       <div style={{ borderTop: '1px dashed black', paddingTop: '8px', marginTop: '10px' }} />
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>Subtotal:</span><span>R$ {(printingOrder.subtotal || printingOrder.total || 0).toFixed(2)}</span></div>
       {printingOrder.deliveryFee > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}><span>Taxa Entrega:</span><span>R$ {printingOrder.deliveryFee.toFixed(2)}</span></div>}
+      {printingOrder.discount > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#16a34a' }}><span>Desconto{printingOrder.couponCode ? ` (${printingOrder.couponCode})` : ''}:</span><span>- R$ {printingOrder.discount.toFixed(2)}</span></div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: 'bold', marginTop: '8px', borderTop: '2px solid black', paddingTop: '5px' }}><span>TOTAL:</span><span>R$ {printingOrder.total.toFixed(2)}</span></div>
       <div style={{ borderTop: '1px dashed black', marginTop: '15px', paddingTop: '10px', textAlign: 'center', fontSize: '12px' }}>
         <p>FORMA DE PAGAMENTO: {(PAYMENT_LABELS[printingOrder.paymentMethod] || printingOrder.paymentMethod || '').toUpperCase()}</p>
@@ -376,6 +377,7 @@ export default function OrderQueue({ kitchenOnly = false }) {
   return (
     <>
       {thermalReceipt}
+      {cancelModal}
       <div className="space-y-8 pb-20 no-print animate-fade-in transition-colors duration-500">
         <div className="flex items-center justify-between">
           <div onClick={() => { if(window.confirm('DEBUG: Forçar impressão teste?')) setPrintingOrder(orders[0]) }} className="cursor-help">

@@ -1,4 +1,4 @@
-import { Flame, ShoppingBag, Clock } from 'lucide-react'
+import { Flame, ShoppingBag, UtensilsCrossed } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore, checkOpenStatus } from '../store/StoreContext'
 
@@ -38,8 +38,16 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center gap-4">
-        {!location.pathname.startsWith('/admin') && (
-          <button 
+        {location.pathname.startsWith('/admin') ? (
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 transition-all group active:scale-95 text-amber-500"
+          >
+            <UtensilsCrossed className="w-4 h-4 transition-transform group-hover:-rotate-12" />
+            <span className="text-[10px] font-black uppercase tracking-widest hidden sm:block">Ver Cardapio</span>
+          </button>
+        ) : (
+          <button
             onClick={() => navigate('/orders')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-white/5 bg-white/[0.03] hover:bg-white/5 transition-all group active:scale-95 ${
               location.pathname === '/orders' ? 'text-amber-500 border-amber-500/20 bg-amber-500/10' : 'text-gray-400'

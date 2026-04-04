@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Tag, ShoppingBag, Settings as SettingsIcon, Bike, Power, AlertTriangle, Layers, ClipboardList, Ticket } from 'lucide-react'
+import { Tag, ShoppingBag, Settings as SettingsIcon, Bike, Power, AlertTriangle, Layers, ClipboardList, Ticket, UtensilsCrossed } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore, checkOpenStatus } from '../store/StoreContext'
 import { useOrders } from '../store/OrdersContext'
@@ -93,12 +93,13 @@ export default function Tabs() {
           )
         })}
 
-        <div className="mt-auto p-4">
-           <button 
+        <div className="mt-auto p-4 space-y-2">
+           <button
              onClick={() => navigate('/')}
-             className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-white/5 text-[10px] font-black uppercase text-gray-500 hover:text-white hover:bg-white/5 transition-all"
+             className="w-full flex items-center justify-center gap-3 py-3 rounded-xl border border-amber-500/20 bg-amber-500/10 text-[10px] font-black uppercase tracking-widest text-amber-500 hover:bg-amber-500/20 transition-all cursor-pointer"
            >
-             Sair do Admin
+             <UtensilsCrossed className="w-4 h-4" />
+             Ver Cardapio
            </button>
         </div>
       </nav>

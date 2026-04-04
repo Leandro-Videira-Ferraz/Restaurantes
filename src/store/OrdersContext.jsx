@@ -26,8 +26,7 @@ function ordersReducer(state, action) {
     }
 
     case 'ADVANCE_STATUS': {
-      const fresh = loadOrders()
-      return fresh.map(order => {
+      return state.map(order => {
         if (order.id !== action.payload) return order
         const flow = order.deliveryMethod === 'pickup' ? STATUS_FLOW_PICKUP : STATUS_FLOW
         const currentIndex = flow.indexOf(order.status)
@@ -39,8 +38,7 @@ function ordersReducer(state, action) {
     }
 
     case 'UPDATE_STATUS': {
-      const fresh = loadOrders()
-      return fresh.map(order =>
+      return state.map(order =>
         order.id === action.payload.id
           ? { ...order, status: action.payload.status, updatedAt: new Date().toISOString() }
           : order
@@ -48,8 +46,7 @@ function ordersReducer(state, action) {
     }
 
     case 'CANCEL_ORDER': {
-      const fresh = loadOrders()
-      return fresh.map(order =>
+      return state.map(order =>
         order.id === action.payload
           ? { ...order, status: 'CANCELADO', updatedAt: new Date().toISOString() }
           : order
@@ -57,8 +54,7 @@ function ordersReducer(state, action) {
     }
 
     case 'REVERT_STATUS': {
-      const fresh = loadOrders()
-      return fresh.map(order => {
+      return state.map(order => {
         if (order.id !== action.payload) return order
         const flow = order.deliveryMethod === 'pickup' ? STATUS_FLOW_PICKUP : STATUS_FLOW
         const currentIndex = flow.indexOf(order.status)
@@ -70,8 +66,7 @@ function ordersReducer(state, action) {
     }
 
     case 'CLEAR_COMPLETED': {
-      const fresh = loadOrders()
-      return fresh.filter(order => !['ENTREGUE', 'RETIRADO', 'CANCELADO'].includes(order.status))
+      return state.filter(order => !['ENTREGUE', 'RETIRADO', 'CANCELADO'].includes(order.status))
     }
 
     case 'SYNC_FROM_STORAGE': {

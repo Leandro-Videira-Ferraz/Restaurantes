@@ -65,8 +65,8 @@ function AppShell() {
 
   return (
     <div className={`min-h-screen flex flex-col relative overflow-hidden ${isLight ? 'theme-light' : ''}`}>
-      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
+      <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full pointer-events-none" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full pointer-events-none" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
 
       <Routes>
         {/* Rota Limpa para Modo Cozinha - Sem Header, Sem Sidebar */}
