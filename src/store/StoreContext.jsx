@@ -31,6 +31,8 @@ const defaultState = {
     useNeighborhoodFees: false,
     neighborhoodFees: [],
     coupons: [],
+    storeAddress: '',
+    storeCity: '',
     operatingHours: [
       { day: 'Segunda', start: '18:00', end: '23:00', closed: false },
       { day: 'Terça', start: '18:00', end: '23:00', closed: false },

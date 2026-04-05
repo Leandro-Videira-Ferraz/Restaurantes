@@ -1,4 +1,4 @@
-import { Settings as SettingsIcon, Clock, ChevronRight, Palette, Image, Sun, Moon } from 'lucide-react'
+import { Settings as SettingsIcon, Clock, ChevronRight, Palette, Image, Sun, Moon, MapPin } from 'lucide-react'
 import { useStore } from '../store/StoreContext'
 
 const colorPresets = [
@@ -183,6 +183,45 @@ export default function Settings() {
               placeholder="https://exemplo.com/logo.png"
             />
             <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest ml-1">Cole a URL de uma imagem PNG ou SVG</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Endereço da Loja */}
+      <div className="glass-card p-8 space-y-8 border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-amber-500/10 rounded-xl flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-amber-500" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-white uppercase italic tracking-tight">Endereço da Loja</h3>
+            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Usado como ponto de partida na otimização de rotas</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Endereço (Rua e Número)</label>
+            <input
+              type="text"
+              value={settings.storeAddress || ''}
+              onChange={(e) => dispatch({ type: 'UPDATE_SETTINGS', payload: { storeAddress: e.target.value } })}
+              className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white font-bold focus:outline-none focus:border-amber-500/50 transition-all"
+              placeholder="Ex: Rua das Flores, 123"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest ml-1">Cidade e Estado</label>
+            <input
+              type="text"
+              value={settings.storeCity || ''}
+              onChange={(e) => dispatch({ type: 'UPDATE_SETTINGS', payload: { storeCity: e.target.value } })}
+              className="w-full bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white font-bold focus:outline-none focus:border-amber-500/50 transition-all"
+              placeholder="Ex: São Paulo, SP"
+            />
+            <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest ml-1">
+              A cidade é usada para geocodificar os endereços dos clientes
+            </p>
           </div>
         </div>
       </div>

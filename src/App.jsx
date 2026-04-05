@@ -17,6 +17,7 @@ import DeliveryForm from './components/DeliveryForm'
 import Orders from './components/Orders'
 import OrderQueue from './components/OrderQueue'
 import CouponsForm from './components/CouponsForm'
+import DeliveryRouteForm from './components/DeliveryRouteForm'
 
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16)
@@ -113,6 +114,7 @@ function AppShell() {
                   <Route path="orders" element={<OrderQueue />} />
                   <Route path="delivery" element={<DeliveryForm />} />
                   <Route path="coupons" element={<CouponsForm />} />
+                  <Route path="delivery-routes" element={<DeliveryRouteForm />} />
                   <Route path="settings" element={<Settings />} />
                 </Routes>
               </main>
