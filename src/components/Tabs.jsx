@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Tag, ShoppingBag, Settings as SettingsIcon, Bike, Power, AlertTriangle, Layers, ClipboardList, Ticket, UtensilsCrossed } from 'lucide-react'
+import { Tag, ShoppingBag, Settings as SettingsIcon, Bike, Power, AlertTriangle, Layers, ClipboardList, Ticket, UtensilsCrossed, BarChart3 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useStore, checkOpenStatus } from '../store/StoreContext'
 import { useOrders } from '../store/OrdersContext'
 
 const tabs = [
+  { id: 'dashboard', label: 'Dashboard', icon: BarChart3, path: '/admin/dashboard' },
   { id: 'orders', label: 'Pedidos', icon: ClipboardList, path: '/admin/orders' },
   { id: 'categories', label: 'Categorias', icon: Tag, path: '/admin/categories' },
   { id: 'products', label: 'Produtos', icon: ShoppingBag, path: '/admin/products' },

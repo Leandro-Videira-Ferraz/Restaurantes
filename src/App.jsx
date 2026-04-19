@@ -10,6 +10,7 @@ import CategoryForm from './components/CategoryForm'
 import ProductForm from './components/ProductForm'
 import AddonsForm from './components/AddonsForm'
 import Menu from './components/Menu'
+import DashboardPage from './components/DashboardPage'
 import Settings from './components/Settings'
 import Cart from './components/Cart'
 import Checkout from './components/Checkout'
@@ -111,7 +112,8 @@ function AppShell() {
               </aside>
               <main className="flex-1 min-w-0">
                 <Routes>
-                  <Route index element={<Navigate to="orders" replace />} />
+                  <Route index element={<Navigate to="dashboard" replace />} />
+                  <Route path="dashboard" element={<DashboardPage />} />
                   <Route path="menu" element={<Menu />} />
                   <Route path="categories" element={<CategoryForm />} />
                   <Route path="products" element={<ProductForm />} />
