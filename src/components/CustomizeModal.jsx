@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { X, Minus, Plus, Check, Utensils, CircleMinus, Layers } from 'lucide-react'
 import { useStore } from '../store/StoreContext'
 
@@ -109,8 +110,8 @@ export default function CustomizeModal({ product, onClose, onConfirm }) {
 
   if (!hasCustomizations) return null
 
-  return (
-    <div className="fixed inset-0 z-[300] flex items-end md:items-center justify-center">
+  return createPortal(
+    <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-md animate-fade-in"
@@ -118,7 +119,7 @@ export default function CustomizeModal({ product, onClose, onConfirm }) {
       ></div>
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col bg-[#0a0a0a] border border-white/10 rounded-t-3xl md:rounded-3xl shadow-2xl animate-slide-up overflow-hidden">
+      <div className="relative z-10 w-full max-w-lg max-h-[90vh] flex flex-col bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl animate-slide-up overflow-hidden">
         {/* Header */}
         <div className="p-6 pb-4 flex items-center gap-4 border-b border-white/5 shrink-0">
           {product.imageUrl ? (
@@ -283,6 +284,7 @@ export default function CustomizeModal({ product, onClose, onConfirm }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }

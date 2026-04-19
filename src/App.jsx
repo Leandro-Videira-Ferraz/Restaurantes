@@ -61,10 +61,16 @@ function AppShell() {
     root.style.setProperty('--border-color', isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.06)')
     document.body.style.backgroundColor = isLight ? '#f5f5f5' : '#050505'
     document.body.style.color = isLight ? '#111111' : '#f5f5f5'
+    
+    if (isLight) {
+      document.body.classList.add('theme-light')
+    } else {
+      document.body.classList.remove('theme-light')
+    }
   }, [accent, isLight])
 
   return (
-    <div className={`min-h-screen flex flex-col relative overflow-hidden ${isLight ? 'theme-light' : ''}`}>
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
       <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full pointer-events-none" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
       <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] blur-[150px] rounded-full pointer-events-none" style={{ background: `${accent}${isLight ? '12' : '08'}` }}></div>
 

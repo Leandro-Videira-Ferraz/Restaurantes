@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Burger Admin — O sistema que não te enche de coisa que você não usa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  :root {
+    --bg: #060606;
+    --bg-2: #0c0c0c;
+    --surface: #111111;
+    --border: rgba(255,255,255,0.08);
+    --border-strong: rgba(255,255,255,0.14);
+    --text: #f5f1ea;
+    --text-dim: #a0978a;
+    --text-mute: #5a5348;
+    --accent: #f59e0b;
+    --accent-ink: #140a00;
+    --danger: #e5484d;
+    --ok: #30a46c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body::before {
+    /* subtle grain */
+    content: '';
+    position: fixed; inset: 0;
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  .serif { font-family: 'Instrument Serif', 'Times New Roman', serif; font-style: italic; font-weight: 400; }
+  .mono-eyebrow {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    font-weight: 700; color: var(--text-mute);
+  }
+  button { font-family: inherit; cursor: pointer; border: none; }
+  a { color: inherit; text-decoration: none; }
+
+  /* Primary CTA */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 800;
+    font-size: 14px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    transition: transform .15s ease, box-shadow .2s ease, background .2s;
+    box-shadow: 0 10px 30px -10px rgba(245,158,11,0.5);
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 14px 40px -8px rgba(245,158,11,0.7); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: transparent;
+    color: var(--text);
+    font-weight: 600; font-size: 14px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    transition: background .2s, border-color .2s;
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.24); }
+
+  /* Tweaks panel */
+  .tweaks-panel {
+    position: fixed; right: 20px; bottom: 20px; z-index: 200;
+    width: 300px;
+    background: #0a0a0a;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 12px;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.8);
+  }
+  .tweaks-panel h4 {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-mute); font-weight: 800; margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .tweak-row { margin-bottom: 10px; }
+  .tweak-row label {
+    display: block; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-dim); margin-bottom: 4px;
+  }
+  .tweak-row input[type=text], .tweak-row input[type=color] {
+    width: 100%; background: #141414; border: 1px solid var(--border);
+    color: var(--text); padding: 8px 10px; border-radius: 8px;
+    font-family: inherit; font-size: 12px;
+  }
+  .tweak-row input[type=color] { height: 32px; padding: 2px; cursor: pointer; }
+
+  /* Animations */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-up { animation: slideUp 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .marquee-track { animation: marquee 40s linear infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "brandName": "Burger Admin",
+  "accentColor": "#ffdd00",
+  "headline": "Um sistema. O que você precisa. Nada a mais.",
+  "competitorA": "iFood",
+  "competitorB": "Goomer",
+  "competitorC": "Outros sistemas",
+  "price": "R$ 89",
+  "promise": "Facilidade de uso. Custo baixo. Sem gordura."
+}/*EDITMODE-END*/;
+
+// ───────────────────────── Icons (stroke-based, no emoji)
+const Icon = {
+  Flame: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M12 2s4 4 4 8a4 4 0 0 1-8 0c0-2 1-3 1-3s-3 2-3 6a6 6 0 0 0 12 0c0-6-6-11-6-11z"/>
+    </svg>
+  ),
+  Arrow: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M5 12h14M13 5l7 7-7 7"/>
+    </svg>
+  ),
+  Check: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  ),
+  X: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    </svg>
+  ),
+  Dash: (p) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" {...p}>
+      <line x1="5" y1="12" x2="19" y2="12"/>
+    </svg>
+  ),
+  Dot: (p) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...p}><circle cx="12" cy="12" r="4"/></svg>
+  ),
+};
+
+// ───────────────────────── Logo mark (replaces Flame placeholder with a wordmark lockup)
+function Logo({ color = "currentColor", text }) {
+  const [first, ...rest] = (text || "Burger Admin").split(' ');
+  return (
+    <div style={{display: 'flex', alignItems: 'center', gap: 12}}>
+      <div style={{
+        width: 36, height: 36, borderRadius: 10,
+        background: color,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: `0 0 24px ${color}40`,
+        position: 'relative'
+      }}>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#0a0500" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M3 8h18M5 8c0-3 3-5 7-5s7 2 7 5M4 12h16M4 12c0 4 4 7 8 7s8-3 8-7"/>
+        </svg>
+      </div>
+      <div style={{fontWeight: 900, fontSize: 18, letterSpacing: '-0.02em', fontStyle: 'italic', textTransform: 'uppercase'}}>
+        {first}<span style={{color}}>{rest.length ? ' ' + rest.join(' ') : ''}</span>
+      </div>
+    </div>
+  );
+}
+
+// ───────────────────────── Nav
+function Nav({brandName, accent, onTweaksToggle, tweaksAvailable}) {
+  return (
+    <nav style={{
+      position: 'sticky', top: 0, zIndex: 50,
+      padding: '20px 48px',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      backdropFilter: 'blur(12px)',
+      background: 'rgba(6,6,6,0.7)',
+      borderBottom: '1px solid var(--border)',
+    }}>
+      <Logo color={accent} text={brandName} />
+      <div style={{display: 'flex', gap: 32, alignItems: 'center'}}>
+        <a href="#comparativo" style={{fontSize: 13, fontWeight: 500, color: 'var(--text-dim)'}}>Comparativo</a>
+        <a href="#cta" style={{fontSize: 13, fontWeight: 500, color: 'var(--text-dim)'}}>Preço</a>
+        <span style={{fontSize: 13, fontWeight: 500, color: 'var(--text-dim)'}}>Entrar</span>
+        <button className="btn-primary" style={{padding: '10px 18px', fontSize: 13, background: accent}}>
+          Testar grátis
+          <Icon.Arrow width="14" height="14"/>
+        </button>
+      </div>
+    </nav>
+  );
+}
+
+// ───────────────────────── Hero
+function Hero({headline, promise, accent}) {
+  const parts = headline.split('.');
+  return (
+    <section style={{padding: '100px 48px 120px', position: 'relative'}}>
+      {/* Ambient glow */}
+      <div style={{
+        position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
+        width: 900, height: 500, borderRadius: '50%',
+        background: `radial-gradient(ellipse, ${accent}18 0%, transparent 60%)`,
+        pointerEvents: 'none', filter: 'blur(40px)',
+      }}/>
+
+      <div style={{maxWidth: 1280, margin: '0 auto', position: 'relative'}}>
+        {/* Eyebrow with agressive framing */}
+        <div className="animate-up" style={{display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40}}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '6px 12px', borderRadius: 999,
+            border: '1px solid var(--border-strong)',
+            background: 'rgba(255,255,255,0.03)',
+            fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase',
+          }}>
+            <span style={{width: 6, height: 6, borderRadius: '50%', background: 'var(--ok)', boxShadow: '0 0 8px var(--ok)'}}/>
+            Gestão de restaurante — sem ferramentas inúteis
+          </div>
+        </div>
+
+        {/* Headline — brutalist-controlled */}
+        <h1 className="animate-up" style={{
+          animationDelay: '.05s',
+          fontSize: 'clamp(48px, 8vw, 120px)',
+          fontWeight: 900,
+          lineHeight: 0.95,
+          letterSpacing: '-0.04em',
+          textTransform: 'uppercase',
+          fontStyle: 'italic',
+          maxWidth: 1100,
+        }}>
+          {parts.map((p, i) => p.trim() && (
+            <div key={i} style={{
+              color: i === parts.length - 2 && parts[parts.length-1].trim() === '' ? accent : 'var(--text)',
+            }}>
+              {p.trim()}
+              {i < parts.length - 1 && <span style={{color: accent}}>.</span>}
+            </div>
+          ))}
+        </h1>
+
+        {/* Promise sub */}
+        <p className="animate-up" style={{
+          animationDelay: '.15s',
+          marginTop: 40,
+          maxWidth: 620,
+          fontSize: 20,
+          lineHeight: 1.45,
+          color: 'var(--text-dim)',
+          fontWeight: 400,
+        }}>
+          {promise} <span className="serif" style={{color: 'var(--text)', fontSize: 22}}>Ponto.</span>
+        </p>
+
+        {/* CTAs */}
+        <div className="animate-up" style={{animationDelay: '.25s', marginTop: 44, display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap'}}>
+          <button className="btn-primary" style={{background: accent, fontSize: 15, padding: '16px 28px'}}>
+            Começar agora — sem cartão
+            <Icon.Arrow width="16" height="16"/>
+          </button>
+          <button className="btn-ghost">Ver em 90 segundos</button>
+          <div style={{display: 'flex', alignItems: 'center', gap: 10, marginLeft: 12, color: 'var(--text-mute)', fontSize: 12, fontWeight: 600}}>
+            <div style={{display: 'flex'}}>
+              {[0,1,2,3].map(i => (
+                <div key={i} style={{
+                  width: 28, height: 28, borderRadius: '50%',
+                  background: ['#c4a57b','#7d5b3c','#a8815a','#5a3d28'][i],
+                  border: '2px solid var(--bg)',
+                  marginLeft: i === 0 ? 0 : -8,
+                }}/>
+              ))}
+            </div>
+            <span>+400 restaurantes rodando leve</span>
+          </div>
+        </div>
+
+        {/* Proof metrics strip */}
+        <div className="animate-up" style={{
+          animationDelay: '.35s',
+          marginTop: 100,
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1,
+          background: 'var(--border)',
+          border: '1px solid var(--border)',
+          borderRadius: 16,
+          overflow: 'hidden',
+        }}>
+          {[
+            ['4 min', 'Pra começar a vender'],
+            ['0', 'Taxa por pedido'],
+            ['12', 'Telas. Só o necessário'],
+            ['100%', 'Quem testa, fica'],
+          ].map(([n, l], i) => (
+            <div key={i} style={{background: 'var(--bg)', padding: '28px 28px'}}>
+              <div style={{fontSize: 44, fontWeight: 900, letterSpacing: '-0.04em', fontStyle: 'italic', lineHeight: 1}}>
+                {n === '0' ? <span style={{color: accent}}>{n}</span> : n}
+              </div>
+              <div style={{marginTop: 8, fontSize: 12, color: 'var(--text-mute)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em'}}>
+                {l}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ───────────────────────── Anti-features marquee (what we DON'T have)
+function AntiMarquee({accent}) {
+  const items = [
+    "CRM gigante que ninguém usa",
+    "Módulo de RH embutido",
+    "Relatório de BI com 47 filtros",
+    "Integração com 300 apps que você nunca vai plugar",
+    "Taxa por pedido escondida",
+    "Contrato de fidelidade",
+    "Implantação de 30 dias",
+    "Consultor obrigatório",
+    "Upsell toda semana",
+    "Mensalidade que triplica no segundo ano",
+  ];
+  const doubled = [...items, ...items];
+  return (
+    <section style={{
+      padding: '40px 0',
+      borderTop: '1px solid var(--border)',
+      borderBottom: '1px solid var(--border)',
+      background: '#080808',
+      overflow: 'hidden',
+      position: 'relative',
+    }}>
+      <div style={{
+        position: 'absolute', top: 12, left: 48,
+        fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase',
+        color: 'var(--text-mute)',
+        background: '#080808', padding: '4px 10px', zIndex: 2,
+      }}>
+        O que nós <span style={{color: accent}}>NÃO</span> temos —
+      </div>
+      <div style={{display: 'flex', gap: 48, whiteSpace: 'nowrap', marginTop: 16}} className="marquee-track">
+        {doubled.map((t, i) => (
+          <div key={i} style={{display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0}}>
+            <Icon.X width="20" height="20" style={{color: 'var(--danger)', opacity: 0.7}}/>
+            <span style={{fontSize: 26, fontWeight: 700, fontStyle: 'italic', color: 'var(--text-dim)'}}>
+              {t}
+            </span>
+            <span style={{color: 'var(--text-mute)', marginLeft: 16}}>·</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ───────────────────────── Comparativo
+function Comparativo({brandName, competitorA, competitorB, competitorC, accent}) {
+  const rows = [
+    { label: 'Mensalidade inicial', us: 'R$ 89 fixos', a: 'R$ 189 + %', b: 'R$ 249 + setup', c: 'R$ 300+' },
+    { label: 'Taxa por pedido',     us: 'Zero',       a: 'Até 23%',    b: '2 a 5%',         c: 'Variável' },
+    { label: 'Tempo pra configurar', us: '4 minutos',  a: '7 a 14 dias', b: 'Consultor agendado', c: 'Semanas' },
+    { label: 'Ferramentas que você não usa', us: 'Nenhuma', a: 'Dezenas',   b: 'Muitas',          c: 'Infinitas' },
+    { label: 'Contrato de fidelidade', us: 'Cancele quando quiser', a: '12 meses', b: '12 meses', c: 'Variável' },
+    { label: 'Suporte humano',       us: 'Direto com gente de verdade', a: 'Chat com bot', b: 'Chamado + fila', c: 'Email' },
+    { label: 'Treinamento do time',  us: '15 min. Pronto.', a: 'Obrigatório pago', b: 'Curso em vídeo', c: 'Manual PDF' },
+  ];
+
+  const Verdict = ({kind, children}) => {
+    const styles = {
+      yes: { bg: `${accent}14`, border: `${accent}30`, color: accent, icon: <Icon.Check width="14" height="14"/> },
+      no:  { bg: 'rgba(229,72,77,0.08)', border: 'rgba(229,72,77,0.2)', color: '#ff6a70', icon: <Icon.X width="14" height="14"/> },
+      mid: { bg: 'rgba(255,255,255,0.03)', border: 'var(--border)', color: 'var(--text-dim)', icon: <Icon.Dash width="14" height="14"/> },
+    }[kind];
+    return (
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 8,
+        padding: '8px 12px', borderRadius: 10,
+        background: styles.bg, border: `1px solid ${styles.border}`, color: styles.color,
+        fontSize: 13, fontWeight: 600,
+      }}>
+        {styles.icon}
+        <span>{children}</span>
+      </div>
+    );
+  };
+
+  return (
+    <section id="comparativo" style={{padding: '140px 48px', maxWidth: 1400, margin: '0 auto'}}>
+      <div style={{maxWidth: 880, marginBottom: 80}}>
+        <div className="mono-eyebrow" style={{marginBottom: 20}}>Nós vs o resto</div>
+        <h2 style={{
+          fontSize: 'clamp(40px, 5.5vw, 76px)',
+          fontWeight: 900,
+          lineHeight: 0.98,
+          letterSpacing: '-0.03em',
+          textTransform: 'uppercase',
+          fontStyle: 'italic',
+        }}>
+          A diferença entre<br/>
+          <span style={{color: accent}}>funcionar</span> <span className="serif" style={{textTransform: 'none', fontStyle: 'italic', fontWeight: 400}}>e</span> parecer <span style={{textDecoration: 'line-through', color: 'var(--text-mute)'}}>moderno</span>.
+        </h2>
+        <p style={{marginTop: 28, fontSize: 18, color: 'var(--text-dim)', maxWidth: 640, lineHeight: 1.5}}>
+          Enquanto o mercado empilha dashboard, CRM, BI e consultoria — a gente cortou tudo que atrapalha. Compare:
+        </p>
+      </div>
+
+      {/* Table */}
+      <div style={{
+        border: '1px solid var(--border-strong)',
+        borderRadius: 20,
+        overflow: 'hidden',
+        background: 'var(--bg-2)',
+      }}>
+        {/* Header row */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1.4fr 1.1fr 1fr 1fr 1fr',
+          background: '#0a0a0a',
+          borderBottom: '1px solid var(--border-strong)',
+        }}>
+          <div style={{padding: '28px 24px'}}>
+            <div className="mono-eyebrow">Item</div>
+          </div>
+          <div style={{
+            padding: '28px 24px',
+            background: `linear-gradient(180deg, ${accent}10, transparent)`,
+            borderLeft: `2px solid ${accent}`,
+          }}>
+            <div style={{fontSize: 11, fontWeight: 800, letterSpacing: '0.18em', textTransform: 'uppercase', color: accent, marginBottom: 4}}>
+              Você aqui
+            </div>
+            <div style={{fontSize: 20, fontWeight: 900, fontStyle: 'italic', textTransform: 'uppercase', letterSpacing: '-0.02em'}}>
+              {brandName}
+            </div>
+          </div>
+          {[competitorA, competitorB, competitorC].map((c, i) => (
+            <div key={i} style={{padding: '28px 24px', borderLeft: '1px solid var(--border)'}}>
+              <div className="mono-eyebrow" style={{marginBottom: 4}}>Concorrente</div>
+              <div style={{fontSize: 20, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '-0.01em'}}>{c}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Rows */}
+        {rows.map((r, i) => (
+          <div key={i} style={{
+            display: 'grid',
+            gridTemplateColumns: '1.4fr 1.1fr 1fr 1fr 1fr',
+            borderBottom: i === rows.length - 1 ? 'none' : '1px solid var(--border)',
+          }}>
+            <div style={{padding: '24px', display: 'flex', alignItems: 'center', fontSize: 15, fontWeight: 500, color: 'var(--text-dim)'}}>
+              {r.label}
+            </div>
+            <div style={{padding: '24px', background: `${accent}06`, borderLeft: `2px solid ${accent}`, display: 'flex', alignItems: 'center'}}>
+              <Verdict kind="yes">{r.us}</Verdict>
+            </div>
+            <div style={{padding: '24px', borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'center'}}>
+              <Verdict kind="no">{r.a}</Verdict>
+            </div>
+            <div style={{padding: '24px', borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'center'}}>
+              <Verdict kind="no">{r.b}</Verdict>
+            </div>
+            <div style={{padding: '24px', borderLeft: '1px solid var(--border)', display: 'flex', alignItems: 'center'}}>
+              <Verdict kind="mid">{r.c}</Verdict>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footnote */}
+      <p style={{marginTop: 20, fontSize: 12, color: 'var(--text-mute)', fontStyle: 'italic'}}>
+        Valores médios observados em novembro/2024. A gente não inventa — e te mostra a fonte se pedir.
+      </p>
+    </section>
+  );
+}
+
+// ───────────────────────── CTA final
+function FinalCTA({brandName, price, accent}) {
+  return (
+    <section id="cta" style={{
+      padding: '180px 48px 140px',
+      position: 'relative',
+      borderTop: '1px solid var(--border)',
+      background: 'radial-gradient(ellipse at center top, #0f0f0f 0%, var(--bg) 70%)',
+    }}>
+      <div style={{maxWidth: 1100, margin: '0 auto', textAlign: 'center', position: 'relative'}}>
+        {/* Glow */}
+        <div style={{
+          position: 'absolute', top: -100, left: '50%', transform: 'translateX(-50%)',
+          width: 600, height: 300, borderRadius: '50%',
+          background: `radial-gradient(ellipse, ${accent}22 0%, transparent 60%)`,
+          pointerEvents: 'none', filter: 'blur(40px)',
+        }}/>
+
+        <div className="mono-eyebrow" style={{marginBottom: 32, position: 'relative'}}>
+          Última parada
+        </div>
+
+        <h2 style={{
+          fontSize: 'clamp(56px, 9vw, 140px)',
+          fontWeight: 900,
+          lineHeight: 0.9,
+          letterSpacing: '-0.045em',
+          textTransform: 'uppercase',
+          fontStyle: 'italic',
+          position: 'relative',
+        }}>
+          Pare de pagar<br/>
+          por coisa que<br/>
+          <span style={{color: accent}}>você não usa</span>.
+        </h2>
+
+        <p style={{marginTop: 40, fontSize: 22, color: 'var(--text-dim)', maxWidth: 640, margin: '40px auto 0', lineHeight: 1.45}}>
+          <span className="serif" style={{fontSize: 26, color: 'var(--text)'}}>{price}</span> por mês. Configurado em 4 minutos. Cancele quando quiser.
+        </p>
+
+        {/* Price card */}
+        <div style={{
+          marginTop: 56,
+          maxWidth: 520, margin: '56px auto 0',
+          background: 'var(--bg-2)',
+          border: `1px solid ${accent}40`,
+          borderRadius: 24,
+          padding: 40,
+          position: 'relative',
+          boxShadow: `0 40px 80px -30px ${accent}30`,
+          textAlign: 'left',
+        }}>
+          <div style={{
+            position: 'absolute', top: -12, left: 40,
+            background: accent, color: 'var(--accent-ink)',
+            fontSize: 10, fontWeight: 900, letterSpacing: '0.18em', textTransform: 'uppercase',
+            padding: '6px 12px', borderRadius: 6,
+          }}>Plano único</div>
+
+          <div style={{display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 24}}>
+            <span style={{fontSize: 72, fontWeight: 900, letterSpacing: '-0.04em', fontStyle: 'italic', lineHeight: 1}}>
+              {price}
+            </span>
+            <span style={{fontSize: 16, color: 'var(--text-mute)', fontWeight: 500}}>/ mês · tudo incluso</span>
+          </div>
+
+          <div style={{display: 'grid', gap: 12, marginBottom: 32}}>
+            {[
+              'Cardápio, carrinho e checkout prontos',
+              'Fila de pedidos com impressão térmica',
+              'Cupons, adicionais e entregas',
+              'Sem taxa por pedido. Nunca.',
+              'Suporte humano no WhatsApp',
+            ].map((f, i) => (
+              <div key={i} style={{display: 'flex', alignItems: 'center', gap: 12}}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: 6,
+                  background: `${accent}20`, border: `1px solid ${accent}50`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: accent, flexShrink: 0,
+                }}>
+                  <Icon.Check width="12" height="12"/>
+                </div>
+                <span style={{fontSize: 15, color: 'var(--text)'}}>{f}</span>
+              </div>
+            ))}
+          </div>
+
+          <button className="btn-primary" style={{width: '100%', background: accent, fontSize: 15, padding: '18px', justifyContent: 'center'}}>
+            Começar os 14 dias grátis
+            <Icon.Arrow width="16" height="16"/>
+          </button>
+
+          <div style={{marginTop: 16, textAlign: 'center', fontSize: 12, color: 'var(--text-mute)'}}>
+            Sem cartão. Sem contrato. Sem letra miúda.
+          </div>
+        </div>
+
+        <div style={{marginTop: 60, fontSize: 13, color: 'var(--text-mute)', fontStyle: 'italic'}}>
+          Ou continue pagando R$ 300/mês pra usar 10% de outro sistema. A escolha é sua.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ───────────────────────── Footer
+function Footer({brandName, accent}) {
+  return (
+    <footer style={{
+      padding: '60px 48px 40px',
+      borderTop: '1px solid var(--border)',
+      display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 40,
+    }}>
+      <div>
+        <Logo color={accent} text={brandName} />
+        <div style={{marginTop: 20, fontSize: 12, color: 'var(--text-mute)', maxWidth: 320, lineHeight: 1.5}}>
+          Software leve pra quem quer vender comida — e não virar tech company.
+        </div>
+      </div>
+      <div style={{display: 'flex', gap: 60, fontSize: 12, color: 'var(--text-mute)'}}>
+        <div>
+          <div style={{fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 12}}>Produto</div>
+          <div style={{display: 'grid', gap: 8}}>
+            <span>Cardápio digital</span>
+            <span>Fila de pedidos</span>
+            <span>Painel admin</span>
+          </div>
+        </div>
+        <div>
+          <div style={{fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: 800, color: 'var(--text-dim)', marginBottom: 12}}>Contato</div>
+          <div style={{display: 'grid', gap: 8}}>
+            <span>WhatsApp</span>
+            <span>Email</span>
+            <span>Instagram</span>
+          </div>
+        </div>
+      </div>
+      <div style={{fontSize: 11, color: 'var(--text-mute)', fontFamily: 'monospace'}}>
+        © 2025 {brandName.toUpperCase()} — Brasil
+      </div>
+    </footer>
+  );
+}
+
+// ───────────────────────── Tweaks Panel
+function TweaksPanel({values, onChange, visible}) {
+  if (!visible) return null;
+  const fields = [
+    { key: 'brandName', label: 'Nome da marca', type: 'text' },
+    { key: 'accentColor', label: 'Cor accent', type: 'color' },
+    { key: 'headline', label: 'Headline principal', type: 'text' },
+    { key: 'promise', label: 'Promessa (subheadline)', type: 'text' },
+    { key: 'price', label: 'Preço', type: 'text' },
+    { key: 'competitorA', label: 'Concorrente 1', type: 'text' },
+    { key: 'competitorB', label: 'Concorrente 2', type: 'text' },
+    { key: 'competitorC', label: 'Concorrente 3', type: 'text' },
+  ];
+  return (
+    <div className="tweaks-panel">
+      <h4>
+        <span>Tweaks</span>
+        <span style={{fontFamily: 'monospace', color: 'var(--accent)'}}>●</span>
+      </h4>
+      {fields.map(f => (
+        <div className="tweak-row" key={f.key}>
+          <label>{f.label}</label>
+          <input
+            type={f.type}
+            value={values[f.key]}
+            onChange={(e) => onChange(f.key, e.target.value)}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ───────────────────────── App
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [tweaksOn, setTweaksOn] = useState(false);
+
+  // Update accent CSS var in sync
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent', tweaks.accentColor);
+  }, [tweaks.accentColor]);
+
+  // Tweaks host protocol
+  useEffect(() => {
+    const onMsg = (e) => {
+      if (!e.data || typeof e.data !== 'object') return;
+      if (e.data.type === '__activate_edit_mode') setTweaksOn(true);
+      if (e.data.type === '__deactivate_edit_mode') setTweaksOn(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({type: '__edit_mode_available'}, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const updateTweak = (k, v) => {
+    setTweaks(prev => ({...prev, [k]: v}));
+    window.parent.postMessage({type: '__edit_mode_set_keys', edits: {[k]: v}}, '*');
+  };
+
+  const { brandName, accentColor, headline, competitorA, competitorB, competitorC, price, promise } = tweaks;
+
+  return (
+    <>
+      <Nav brandName={brandName} accent={accentColor} />
+      <Hero headline={headline} promise={promise} accent={accentColor}/>
+      <AntiMarquee accent={accentColor}/>
+      <Comparativo
+        brandName={brandName}
+        competitorA={competitorA} competitorB={competitorB} competitorC={competitorC}
+        accent={accentColor}
+      />
+      <FinalCTA brandName={brandName} price={price} accent={accentColor}/>
+      <Footer brandName={brandName} accent={accentColor}/>
+      <TweaksPanel values={tweaks} onChange={updateTweak} visible={tweaksOn}/>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
